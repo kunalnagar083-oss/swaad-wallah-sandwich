@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /* ── Constants ── */
 const BUSINESS_NAME = "Swaad Wallah Sandwich";
+const OWNER_NAME = "Kunall_nagarrr";
 const ADDRESS = "Prabhat Chauraha, Bhopal, MP";
 const PHONE = "9303526637";
 const INSTAGRAM = "@Swaad_Wallah_Sandwich";
@@ -22,8 +23,36 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 const HERO_IMAGES = [
   {
-    src: "/assets/uploads/20260224_022003-5.jpg",
+    src: "/assets/uploads/slide-5-1.jpg",
+    alt: "Create Your Swaad Wallah Masterpiece",
+  },
+  {
+    src: "/assets/uploads/slide-3-4-2.jpg",
+    alt: "Elevate Your Sandwich Game",
+  },
+  {
+    src: "/assets/uploads/slide-5-1-3.jpg",
+    alt: "Take the First Step to a Healthier You",
+  },
+  {
+    src: "/assets/uploads/Gemini_Generated_Image_ki7wxhki7wxhki7w-2-4.png",
+    alt: "Swaad Wallah Sandwich – Owner Portrait",
+  },
+  {
+    src: "/assets/uploads/20260224_022003-2-5.jpg",
     alt: "Swaad Wallah Sandwich – Business Banner",
+  },
+  {
+    src: "/assets/uploads/slide-4-1.jpg",
+    alt: "Savor Every Bite – Swaad Wallah",
+  },
+  {
+    src: "/assets/uploads/slide-2-2-2.jpg",
+    alt: "Swaad Wallah Sandwich Magic",
+  },
+  {
+    src: "/assets/uploads/20260224_022003-5.jpg",
+    alt: "Swaad Wallah Sandwich – Banner",
   },
   {
     src: "/assets/uploads/slide-3-1.jpg",
@@ -277,6 +306,14 @@ function HeroCarousel() {
             <MapPin size={16} className="text-saffron" />
             {ADDRESS}
           </p>
+          <div className="mt-3 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/15 border border-white/30 backdrop-blur-sm">
+            <span className="text-saffron text-sm font-bold uppercase tracking-widest">
+              Owner:
+            </span>
+            <span className="text-white font-bold text-base tracking-wide">
+              {OWNER_NAME}
+            </span>
+          </div>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               type="button"
@@ -551,9 +588,16 @@ function GallerySection() {
     return () => window.removeEventListener("keydown", handler);
   }, [closeLightbox, goPrev, goNext]);
 
-  // Grid layout: 2 large + 3 smaller
+  // Grid layout: first image large, rest equal
   const gridClasses = [
-    "col-span-1 row-span-2 md:col-span-2 md:row-span-2",
+    "col-span-2 md:col-span-2 row-span-2",
+    "col-span-1",
+    "col-span-1",
+    "col-span-1",
+    "col-span-1",
+    "col-span-1",
+    "col-span-1",
+    "col-span-1",
     "col-span-1",
     "col-span-1",
     "col-span-1",
@@ -791,11 +835,17 @@ function ContactFooter() {
       {/* Bottom footer bar */}
       <div className="bg-charcoal py-6">
         <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🥪</span>
-            <span className="font-display text-lg font-bold text-cream">
-              {BUSINESS_NAME}
-            </span>
+          <div className="flex flex-col items-center md:items-start gap-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🥪</span>
+              <span className="font-display text-lg font-bold text-cream">
+                {BUSINESS_NAME}
+              </span>
+            </div>
+            <p className="font-body text-white/50 text-xs">
+              Owner:{" "}
+              <span className="text-saffron font-semibold">{OWNER_NAME}</span>
+            </p>
           </div>
           <p className="font-body text-white/50 text-sm">
             © {CURRENT_YEAR} {BUSINESS_NAME}. All rights reserved.
