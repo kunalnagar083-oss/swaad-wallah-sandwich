@@ -31,6 +31,143 @@ const ADDRESS = "Indrapuri Sector C, Bhopal, MP";
 const PHONE = "9303526637";
 const INSTAGRAM = "@Swaad_Wallah_Sandwich";
 const HOURS = "11:00 AM – 11:00 PM (Daily)";
+
+const STATIC_MENU = [
+  {
+    id: BigInt(1),
+    name: "Veg Sandwich",
+    category: "Sandwich",
+    price: BigInt(40),
+    ingredients: "Bread, fresh veggies, tomato, onion, sauces",
+  },
+  {
+    id: BigInt(2),
+    name: "Cheese Sandwich",
+    category: "Sandwich",
+    price: BigInt(60),
+    ingredients: "Bread, cheese, veggies, mayo",
+  },
+  {
+    id: BigInt(3),
+    name: "Grilled Sandwich",
+    category: "Sandwich",
+    price: BigInt(50),
+    ingredients: "Toasted bread, veggies, butter, spices",
+  },
+  {
+    id: BigInt(4),
+    name: "Club Sandwich",
+    category: "Sandwich",
+    price: BigInt(70),
+    ingredients: "Layered bread, veggies, cheese, sauces",
+  },
+  {
+    id: BigInt(5),
+    name: "Paneer Sandwich",
+    category: "Sandwich",
+    price: BigInt(70),
+    ingredients: "Bread, paneer tikka, veggies, mint chutney",
+  },
+  {
+    id: BigInt(6),
+    name: "Veg Burger",
+    category: "Burger",
+    price: BigInt(50),
+    ingredients: "Bun, veg patty, lettuce, tomato, sauces",
+  },
+  {
+    id: BigInt(7),
+    name: "Cheese Burger",
+    category: "Burger",
+    price: BigInt(70),
+    ingredients: "Bun, veg patty, cheese slice, lettuce, mayo",
+  },
+  {
+    id: BigInt(8),
+    name: "Paneer Burger",
+    category: "Burger",
+    price: BigInt(80),
+    ingredients: "Bun, paneer patty, veggies, special sauce",
+  },
+  {
+    id: BigInt(9),
+    name: "Veg Chaumin",
+    category: "Chaumin",
+    price: BigInt(60),
+    ingredients: "Noodles, mixed veggies, soy sauce, spices",
+  },
+  {
+    id: BigInt(10),
+    name: "Paneer Chaumin",
+    category: "Chaumin",
+    price: BigInt(80),
+    ingredients: "Noodles, paneer, veggies, desi twist",
+  },
+  {
+    id: BigInt(11),
+    name: "Hakka Noodles",
+    category: "Chaumin",
+    price: BigInt(70),
+    ingredients: "Hakka noodles, veggies, sauces, spices",
+  },
+  {
+    id: BigInt(12),
+    name: "Steamed Momos",
+    category: "Momos",
+    price: BigInt(60),
+    ingredients: "Flour, veg/paneer filling, dipping sauce",
+  },
+  {
+    id: BigInt(13),
+    name: "Fried Momos",
+    category: "Momos",
+    price: BigInt(70),
+    ingredients: "Crispy fried dumplings, spicy sauce",
+  },
+  {
+    id: BigInt(14),
+    name: "Paneer Fried Momos",
+    category: "Momos",
+    price: BigInt(80),
+    ingredients: "Fried momos with paneer stuffing",
+  },
+  {
+    id: BigInt(15),
+    name: "Tandoori Momos",
+    category: "Momos",
+    price: BigInt(90),
+    ingredients: "Chargrilled momos, tandoori spices, chutney",
+  },
+  {
+    id: BigInt(16),
+    name: "Cold Coffee",
+    category: "Drinks",
+    price: BigInt(50),
+    ingredients: "Coffee, milk, ice, sugar",
+  },
+  {
+    id: BigInt(17),
+    name: "Mango Juice",
+    category: "Drinks",
+    price: BigInt(40),
+    ingredients: "Fresh mango pulp, chilled",
+  },
+  {
+    id: BigInt(18),
+    name: "Lemon Soda",
+    category: "Drinks",
+    price: BigInt(30),
+    ingredients: "Fresh lime, soda water, salt/sugar",
+  },
+  {
+    id: BigInt(19),
+    name: "Lassi",
+    category: "Drinks",
+    price: BigInt(40),
+    ingredients: "Yogurt, sugar, cardamom, chilled",
+  },
+] as MenuItem[];
+
 const CURRENT_YEAR = new Date().getFullYear();
 
 type Page = "home" | "menu" | "order" | "messages" | "admin";
@@ -935,9 +1072,9 @@ type CartItem = { item: MenuItem; qty: number };
 function OrderPage({ onBack }: { onBack: () => void }) {
   const { actor: _actor } = useActor();
   const actor = _actor as AppBackendInterface | null;
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(STATIC_MENU);
+  const [loading, _setLoading] = useState(false);
+  const [error, _setError] = useState("");
   const [category, setCategory] = useState("All");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
@@ -953,13 +1090,9 @@ function OrderPage({ onBack }: { onBack: () => void }) {
     actor
       .getMenuItems()
       .then((items) => {
-        setMenuItems(items);
-        setLoading(false);
+        if (items.length > 0) setMenuItems(items);
       })
-      .catch(() => {
-        setError("Failed to load menu. Please refresh.");
-        setLoading(false);
-      });
+      .catch(() => {});
   }, [actor]);
 
   const categories = [
@@ -2292,8 +2425,8 @@ function MenuPage({
 }: { onBack: () => void; onOrderClick: () => void }) {
   const { actor: _actor } = useActor();
   const actor = _actor as AppBackendInterface | null;
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(STATIC_MENU);
+  const [loading, _setLoading] = useState(false);
   const [category, setCategory] = useState("All");
 
   useEffect(() => {
@@ -2301,10 +2434,9 @@ function MenuPage({
     actor
       .getMenuItems()
       .then((items) => {
-        setMenuItems(items);
-        setLoading(false);
+        if (items.length > 0) setMenuItems(items);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {});
   }, [actor]);
 
   const categories = [
