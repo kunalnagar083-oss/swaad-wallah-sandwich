@@ -29,7 +29,11 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "bg-background/95 backdrop-blur-md shadow-card" : "bg-transparent"}`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-background/95 backdrop-blur-md shadow-card"
+          : "bg-transparent"
+      }`}
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
@@ -42,8 +46,9 @@ export default function Navbar() {
           <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-warm">
             <ChefHat className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="font-display font-700 text-lg text-foreground leading-tight">
-            Swaad Wallah
+          <span className="font-display font-700 text-lg leading-tight">
+            <span className="text-foreground">Swaad Wallah </span>
+            <span className="text-primary">Sandwich</span>
           </span>
         </button>
 
