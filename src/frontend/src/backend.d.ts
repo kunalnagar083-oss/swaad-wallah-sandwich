@@ -29,6 +29,29 @@ export interface RestaurantInfo {
     address: string;
     phoneNumber: string;
 }
+export interface OrderItem {
+    quantity: bigint;
+    menuItemId: bigint;
+}
+export interface CustomerProfile {
+    name: string;
+    phone: string;
+}
+export interface OrderEntity {
+    id: bigint;
+    customerName: string;
+    status: OrderStatus;
+    customerPhone: string;
+    customer: Principal;
+    message?: string;
+    items: Array<OrderItem>;
+}
+export enum OrderStatus {
+    preparing = "preparing",
+    pending = "pending",
+    delivered = "delivered",
+    ready = "ready"
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -40,15 +63,22 @@ export interface backendInterface {
     deleteAllDataAndInitialize(): Promise<void>;
     deleteMenuItem(id: bigint): Promise<void>;
     filterMenu(searchTerm: string): Promise<Array<MenuItem>>;
+    getAllOrders(): Promise<Array<OrderEntity>>;
     getAvailableMenuItems(): Promise<Array<MenuItem>>;
     getCallerUserRole(): Promise<UserRole>;
+    getCustomerProfile(): Promise<CustomerProfile | null>;
     getMenuItem(id: bigint): Promise<MenuItem>;
     getMenuItems(): Promise<Array<MenuItem>>;
     getMenuItemsByCategory(category: string): Promise<Array<MenuItem>>;
+    getMyOrders(): Promise<Array<OrderEntity>>;
+    getOrder(orderId: bigint): Promise<OrderEntity | null>;
     getRestaurantInfo(): Promise<RestaurantInfo>;
     isCallerAdmin(): Promise<boolean>;
+    placeOrder(items: Array<OrderItem>, message: string | null): Promise<OrderEntity>;
+    saveCustomerProfile(name: string, phone: string): Promise<void>;
     seedDatabaseIfEmpty(): Promise<void>;
     toggleMenuItemAvailability(id: bigint): Promise<MenuItem>;
     updateMenuItem(id: bigint, name: string, description: string, price: bigint, category: string, image: ExternalBlob | null): Promise<MenuItem>;
+    updateOrderStatus(orderId: bigint, status: OrderStatus): Promise<void>;
     updateRestaurantInfo(name: string, address: string, phoneNumber: string, email: string): Promise<void>;
 }

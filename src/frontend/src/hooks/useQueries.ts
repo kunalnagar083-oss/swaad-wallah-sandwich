@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MenuItem, RestaurantInfo } from "../backend.d";
+import type {
+  MenuItem,
+  OrderEntity,
+  OrderItem,
+  OrderStatus,
+  RestaurantInfo,
+} from "../backend.d";
 import { useActor } from "./useActor";
 
 export function useGetAvailableMenuItems() {
@@ -164,6 +170,87 @@ export function useUpdateRestaurantInfo() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["restaurantInfo"] });
+    },
+  });
+}
+
+export function useGetCustomerProfile() {
+  const { actor, isFetching } = useActor();
+  return useQuery<{ name: string; phone: string } | null>({
+    queryKey: ["customerProfile"],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getCustomerProfile();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSaveCustomerProfile() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; phone: string }) => {
+      if (!actor) throw new Error("No actor");
+      return actor.saveCustomerProfile(data.name, data.phone);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customerProfile"] });
+    },
+  });
+}
+
+export function usePlaceOrder() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      items: Array<OrderItem>;
+      message: string | null;
+    }) => {
+      if (!actor) throw new Error("No actor");
+      return actor.placeOrder(data.items, data.message);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["myOrders"] });
+    },
+  });
+}
+
+export function useGetMyOrders() {
+  const { actor, isFetching } = useActor();
+  return useQuery<OrderEntity[]>({
+    queryKey: ["myOrders"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMyOrders();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllOrders() {
+  const { actor, isFetching } = useActor();
+  return useQuery<OrderEntity[]>({
+    queryKey: ["allOrders"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllOrders();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUpdateOrderStatus() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { orderId: bigint; status: OrderStatus }) => {
+      if (!actor) throw new Error("No actor");
+      return actor.updateOrderStatus(data.orderId, data.status);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["allOrders"] });
     },
   });
 }

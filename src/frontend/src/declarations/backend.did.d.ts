@@ -10,6 +10,7 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface CustomerProfile { 'name' : string, 'phone' : string }
 export type ExternalBlob = Uint8Array;
 export interface MenuItem {
   'id' : bigint,
@@ -20,6 +21,20 @@ export interface MenuItem {
   'image' : [] | [ExternalBlob],
   'price' : bigint,
 }
+export interface OrderEntity {
+  'id' : bigint,
+  'customerName' : string,
+  'status' : OrderStatus,
+  'customerPhone' : string,
+  'customer' : Principal,
+  'message' : [] | [string],
+  'items' : Array<OrderItem>,
+}
+export interface OrderItem { 'quantity' : bigint, 'menuItemId' : bigint }
+export type OrderStatus = { 'preparing' : null } |
+  { 'pending' : null } |
+  { 'delivered' : null } |
+  { 'ready' : null };
 export interface RestaurantInfo {
   'name' : string,
   'email' : string,
@@ -65,19 +80,26 @@ export interface _SERVICE {
   'deleteAllDataAndInitialize' : ActorMethod<[], undefined>,
   'deleteMenuItem' : ActorMethod<[bigint], undefined>,
   'filterMenu' : ActorMethod<[string], Array<MenuItem>>,
+  'getAllOrders' : ActorMethod<[], Array<OrderEntity>>,
   'getAvailableMenuItems' : ActorMethod<[], Array<MenuItem>>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getCustomerProfile' : ActorMethod<[], [] | [CustomerProfile]>,
   'getMenuItem' : ActorMethod<[bigint], MenuItem>,
   'getMenuItems' : ActorMethod<[], Array<MenuItem>>,
   'getMenuItemsByCategory' : ActorMethod<[string], Array<MenuItem>>,
+  'getMyOrders' : ActorMethod<[], Array<OrderEntity>>,
+  'getOrder' : ActorMethod<[bigint], [] | [OrderEntity]>,
   'getRestaurantInfo' : ActorMethod<[], RestaurantInfo>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'placeOrder' : ActorMethod<[Array<OrderItem>, [] | [string]], OrderEntity>,
+  'saveCustomerProfile' : ActorMethod<[string, string], undefined>,
   'seedDatabaseIfEmpty' : ActorMethod<[], undefined>,
   'toggleMenuItemAvailability' : ActorMethod<[bigint], MenuItem>,
   'updateMenuItem' : ActorMethod<
     [bigint, string, string, bigint, string, [] | [ExternalBlob]],
     MenuItem
   >,
+  'updateOrderStatus' : ActorMethod<[bigint, OrderStatus], undefined>,
   'updateRestaurantInfo' : ActorMethod<
     [string, string, string, string],
     undefined

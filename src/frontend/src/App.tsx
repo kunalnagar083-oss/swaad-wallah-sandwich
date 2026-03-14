@@ -7,8 +7,10 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
+import { CartProvider } from "./context/CartContext";
 import AdminPage from "./pages/Admin";
 import HomePage from "./pages/Home";
+import OrdersPage from "./pages/Orders";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,10 +20,10 @@ const queryClient = new QueryClient({
 
 const rootRoute = createRootRoute({
   component: () => (
-    <>
+    <CartProvider>
       <Outlet />
       <Toaster richColors position="top-right" />
-    </>
+    </CartProvider>
   ),
 });
 
@@ -37,7 +39,13 @@ const adminRoute = createRoute({
   component: AdminPage,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, adminRoute]);
+const ordersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/orders",
+  component: OrdersPage,
+});
+
+const routeTree = rootRoute.addChildren([homeRoute, adminRoute, ordersRoute]);
 const router = createRouter({ routeTree });
 
 declare module "@tanstack/react-router" {

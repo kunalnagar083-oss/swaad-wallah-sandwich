@@ -20,7 +20,7 @@ export default function HeroSection() {
           className="w-full h-full object-cover"
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/45 to-black/75" />
       </div>
 
       {/* Decorative spice dots */}
@@ -48,7 +48,12 @@ export default function HeroSection() {
           className="font-display text-5xl sm:text-6xl lg:text-7xl font-800 text-white leading-tight mb-4"
         >
           Swaad Wallah
-          <span className="block text-primary italic">Sandwich</span>
+          <span
+            className="block italic font-800"
+            style={{ color: "oklch(0.82 0.26 55)" }}
+          >
+            Sandwich
+          </span>
         </motion.h1>
 
         <motion.p

@@ -1,8 +1,13 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, ShoppingCart } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { toast } from "sonner";
 import type { MenuItem } from "../backend.d";
+import { useCart } from "../context/CartContext";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetAvailableMenuItems } from "../hooks/useQueries";
 
 const CATEGORIES = ["All", "Sandwich", "Burger", "Beverage", "Snack"];
@@ -28,6 +33,22 @@ function MenuCard({ item, index }: { item: MenuItem; index: number }) {
   const colorClass =
     categoryColors[item.category] ??
     "bg-muted text-muted-foreground border-muted";
+  const { addItem, setIsOpen } = useCart();
+  const { identity, login } = useInternetIdentity();
+  const isLoggedIn = !!identity;
+
+  const handleAddToCart = () => {
+    if (!isLoggedIn) {
+      toast.error("Please login to add items to cart", {
+        action: { label: "Login", onClick: () => login() },
+      });
+      return;
+    }
+    addItem(item);
+    toast.success(`${item.name} added to cart!`, {
+      action: { label: "View Cart", onClick: () => setIsOpen(true) },
+    });
+  };
 
   return (
     <motion.div
@@ -35,7 +56,7 @@ function MenuCard({ item, index }: { item: MenuItem; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: (index % 6) * 0.08 }}
-      className="bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-shadow duration-300 group"
+      className="bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-shadow duration-300 group flex flex-col"
       data-ocid={`menu.item.${index + 1}`}
     >
       <div className="relative overflow-hidden h-40">
@@ -52,18 +73,28 @@ function MenuCard({ item, index }: { item: MenuItem; index: number }) {
           {item.category}
         </Badge>
       </div>
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         <h3 className="font-display font-700 text-sm text-foreground mb-1 leading-snug">
           {item.name}
         </h3>
-        <p className="text-muted-foreground text-xs leading-relaxed line-clamp-2 mb-3">
+        <p className="text-muted-foreground text-xs leading-relaxed line-clamp-2 mb-3 flex-1">
           {item.description}
         </p>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto">
           <span className="font-display font-800 text-lg text-primary">
             ₹{item.price.toString()}
           </span>
-          {!item.isAvailable && (
+          {item.isAvailable ? (
+            <Button
+              size="sm"
+              onClick={handleAddToCart}
+              className="h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-full"
+              data-ocid={`menu.item.${index + 1}`}
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Add
+            </Button>
+          ) : (
             <span className="text-xs text-destructive font-medium">
               Unavailable
             </span>
@@ -95,6 +126,9 @@ function MenuSkeleton() {
 export default function MenuSection() {
   const [activeCategory, setActiveCategory] = useState("All");
   const { data: menuItems, isLoading } = useGetAvailableMenuItems();
+  const { totalCount, setIsOpen } = useCart();
+  const { identity } = useInternetIdentity();
+  const isLoggedIn = !!identity;
 
   const filtered = menuItems
     ? activeCategory === "All"
@@ -105,7 +139,6 @@ export default function MenuSection() {
   return (
     <section id="menu" className="py-20 bg-muted/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -125,7 +158,6 @@ export default function MenuSection() {
           </p>
         </motion.div>
 
-        {/* Category filter tabs */}
         <div
           className="flex flex-wrap justify-center gap-2 mb-10"
           role="tablist"
@@ -149,7 +181,20 @@ export default function MenuSection() {
           ))}
         </div>
 
-        {/* Menu grid */}
+        {isLoggedIn && totalCount > 0 && (
+          <div className="flex justify-center mb-6">
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full font-semibold text-sm shadow-warm hover:bg-primary/90 transition-colors"
+              data-ocid="menu.primary_button"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              {totalCount} item{totalCount !== 1 ? "s" : ""} in cart → View
+            </button>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {SKELETON_KEYS.map((k) => (

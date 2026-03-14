@@ -34,6 +34,29 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const OrderStatus = IDL.Variant({
+  'preparing' : IDL.Null,
+  'pending' : IDL.Null,
+  'delivered' : IDL.Null,
+  'ready' : IDL.Null,
+});
+export const OrderItem = IDL.Record({
+  'quantity' : IDL.Nat,
+  'menuItemId' : IDL.Nat,
+});
+export const OrderEntity = IDL.Record({
+  'id' : IDL.Nat,
+  'customerName' : IDL.Text,
+  'status' : OrderStatus,
+  'customerPhone' : IDL.Text,
+  'customer' : IDL.Principal,
+  'message' : IDL.Opt(IDL.Text),
+  'items' : IDL.Vec(OrderItem),
+});
+export const CustomerProfile = IDL.Record({
+  'name' : IDL.Text,
+  'phone' : IDL.Text,
+});
 export const RestaurantInfo = IDL.Record({
   'name' : IDL.Text,
   'email' : IDL.Text,
@@ -78,8 +101,10 @@ export const idlService = IDL.Service({
   'deleteAllDataAndInitialize' : IDL.Func([], [], []),
   'deleteMenuItem' : IDL.Func([IDL.Nat], [], []),
   'filterMenu' : IDL.Func([IDL.Text], [IDL.Vec(MenuItem)], ['query']),
+  'getAllOrders' : IDL.Func([], [IDL.Vec(OrderEntity)], ['query']),
   'getAvailableMenuItems' : IDL.Func([], [IDL.Vec(MenuItem)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCustomerProfile' : IDL.Func([], [IDL.Opt(CustomerProfile)], ['query']),
   'getMenuItem' : IDL.Func([IDL.Nat], [MenuItem], ['query']),
   'getMenuItems' : IDL.Func([], [IDL.Vec(MenuItem)], ['query']),
   'getMenuItemsByCategory' : IDL.Func(
@@ -87,8 +112,16 @@ export const idlService = IDL.Service({
       [IDL.Vec(MenuItem)],
       ['query'],
     ),
+  'getMyOrders' : IDL.Func([], [IDL.Vec(OrderEntity)], ['query']),
+  'getOrder' : IDL.Func([IDL.Nat], [IDL.Opt(OrderEntity)], ['query']),
   'getRestaurantInfo' : IDL.Func([], [RestaurantInfo], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'placeOrder' : IDL.Func(
+      [IDL.Vec(OrderItem), IDL.Opt(IDL.Text)],
+      [OrderEntity],
+      [],
+    ),
+  'saveCustomerProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'seedDatabaseIfEmpty' : IDL.Func([], [], []),
   'toggleMenuItemAvailability' : IDL.Func([IDL.Nat], [MenuItem], []),
   'updateMenuItem' : IDL.Func(
@@ -96,6 +129,7 @@ export const idlService = IDL.Service({
       [MenuItem],
       [],
     ),
+  'updateOrderStatus' : IDL.Func([IDL.Nat, OrderStatus], [], []),
   'updateRestaurantInfo' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
       [],
@@ -132,6 +166,26 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const OrderStatus = IDL.Variant({
+    'preparing' : IDL.Null,
+    'pending' : IDL.Null,
+    'delivered' : IDL.Null,
+    'ready' : IDL.Null,
+  });
+  const OrderItem = IDL.Record({
+    'quantity' : IDL.Nat,
+    'menuItemId' : IDL.Nat,
+  });
+  const OrderEntity = IDL.Record({
+    'id' : IDL.Nat,
+    'customerName' : IDL.Text,
+    'status' : OrderStatus,
+    'customerPhone' : IDL.Text,
+    'customer' : IDL.Principal,
+    'message' : IDL.Opt(IDL.Text),
+    'items' : IDL.Vec(OrderItem),
+  });
+  const CustomerProfile = IDL.Record({ 'name' : IDL.Text, 'phone' : IDL.Text });
   const RestaurantInfo = IDL.Record({
     'name' : IDL.Text,
     'email' : IDL.Text,
@@ -176,8 +230,10 @@ export const idlFactory = ({ IDL }) => {
     'deleteAllDataAndInitialize' : IDL.Func([], [], []),
     'deleteMenuItem' : IDL.Func([IDL.Nat], [], []),
     'filterMenu' : IDL.Func([IDL.Text], [IDL.Vec(MenuItem)], ['query']),
+    'getAllOrders' : IDL.Func([], [IDL.Vec(OrderEntity)], ['query']),
     'getAvailableMenuItems' : IDL.Func([], [IDL.Vec(MenuItem)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCustomerProfile' : IDL.Func([], [IDL.Opt(CustomerProfile)], ['query']),
     'getMenuItem' : IDL.Func([IDL.Nat], [MenuItem], ['query']),
     'getMenuItems' : IDL.Func([], [IDL.Vec(MenuItem)], ['query']),
     'getMenuItemsByCategory' : IDL.Func(
@@ -185,8 +241,16 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(MenuItem)],
         ['query'],
       ),
+    'getMyOrders' : IDL.Func([], [IDL.Vec(OrderEntity)], ['query']),
+    'getOrder' : IDL.Func([IDL.Nat], [IDL.Opt(OrderEntity)], ['query']),
     'getRestaurantInfo' : IDL.Func([], [RestaurantInfo], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'placeOrder' : IDL.Func(
+        [IDL.Vec(OrderItem), IDL.Opt(IDL.Text)],
+        [OrderEntity],
+        [],
+      ),
+    'saveCustomerProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'seedDatabaseIfEmpty' : IDL.Func([], [], []),
     'toggleMenuItemAvailability' : IDL.Func([IDL.Nat], [MenuItem], []),
     'updateMenuItem' : IDL.Func(
@@ -194,6 +258,7 @@ export const idlFactory = ({ IDL }) => {
         [MenuItem],
         [],
       ),
+    'updateOrderStatus' : IDL.Func([IDL.Nat, OrderStatus], [], []),
     'updateRestaurantInfo' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [],

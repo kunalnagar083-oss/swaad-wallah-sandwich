@@ -18,9 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ChefHat,
+  ClipboardList,
   Edit2,
   LogOut,
   Plus,
@@ -34,20 +36,30 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { MenuItem } from "../backend.d";
+import { OrderStatus } from "../backend.d";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useAddMenuItem,
   useDeleteMenuItem,
   useGetAllMenuItems,
+  useGetAllOrders,
   useGetRestaurantInfo,
   useIsCallerAdmin,
   useToggleMenuItemAvailability,
   useUpdateMenuItem,
+  useUpdateOrderStatus,
   useUpdateRestaurantInfo,
 } from "../hooks/useQueries";
 
 const CATEGORIES = ["Sandwich", "Burger", "Beverage", "Snack"];
 const ADMIN_SKELETON_KEYS = ["as1", "as2", "as3", "as4"];
+
+const ORDER_STATUSES: { value: OrderStatus; label: string }[] = [
+  { value: OrderStatus.pending, label: "Pending" },
+  { value: OrderStatus.preparing, label: "Preparing" },
+  { value: OrderStatus.ready, label: "Ready" },
+  { value: OrderStatus.delivered, label: "Delivered" },
+];
 
 type ItemForm = {
   name: string;
@@ -61,6 +73,21 @@ const emptyForm: ItemForm = {
   price: "",
   category: "Sandwich",
 };
+
+function statusBadgeClass(status: OrderStatus) {
+  switch (status) {
+    case OrderStatus.pending:
+      return "bg-amber-100 text-amber-800 border-amber-300";
+    case OrderStatus.preparing:
+      return "bg-blue-100 text-blue-800 border-blue-300";
+    case OrderStatus.ready:
+      return "bg-green-100 text-green-800 border-green-300";
+    case OrderStatus.delivered:
+      return "bg-gray-100 text-gray-600 border-gray-300";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
 
 function AddItemDialog() {
   const [open, setOpen] = useState(false);
@@ -411,6 +438,127 @@ function RestaurantInfoEditor() {
   );
 }
 
+function OrdersTab() {
+  const { data: orders, isLoading } = useGetAllOrders();
+  const updateStatus = useUpdateOrderStatus();
+
+  const handleStatusChange = async (orderId: bigint, status: OrderStatus) => {
+    try {
+      await updateStatus.mutateAsync({ orderId, status });
+      toast.success("Order status updated!");
+    } catch {
+      toast.error("Failed to update status");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3" data-ocid="admin.orders.loading_state">
+        {ADMIN_SKELETON_KEYS.map((k) => (
+          <Skeleton key={k} className="h-16 w-full rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="text-center py-16" data-ocid="admin.orders.empty_state">
+        <ClipboardList className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+        <p className="text-muted-foreground">
+          No orders yet. Orders will appear here when customers place them.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm" data-ocid="admin.orders.table">
+        <thead>
+          <tr className="border-b border-border text-left">
+            <th className="px-4 py-3 font-semibold text-muted-foreground">
+              Order ID
+            </th>
+            <th className="px-4 py-3 font-semibold text-muted-foreground">
+              Customer
+            </th>
+            <th className="px-4 py-3 font-semibold text-muted-foreground">
+              Phone
+            </th>
+            <th className="px-4 py-3 font-semibold text-muted-foreground">
+              Items
+            </th>
+            <th className="px-4 py-3 font-semibold text-muted-foreground">
+              Status
+            </th>
+            <th className="px-4 py-3 font-semibold text-muted-foreground">
+              Update
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {[...orders].reverse().map((order, i) => (
+            <tr
+              key={order.id.toString()}
+              className="hover:bg-muted/30 transition-colors"
+              data-ocid={`admin.orders.row.${i + 1}`}
+            >
+              <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                #{order.id.toString()}
+              </td>
+              <td className="px-4 py-3 font-semibold">{order.customerName}</td>
+              <td className="px-4 py-3 text-muted-foreground">
+                {order.customerPhone}
+              </td>
+              <td className="px-4 py-3">
+                <span className="text-xs">
+                  {order.items.length} item{order.items.length !== 1 ? "s" : ""}
+                </span>
+                {order.message && (
+                  <p className="text-xs text-muted-foreground italic mt-0.5 max-w-32 truncate">
+                    {order.message}
+                  </p>
+                )}
+              </td>
+              <td className="px-4 py-3">
+                <Badge
+                  className={`text-xs border ${statusBadgeClass(order.status)}`}
+                >
+                  {ORDER_STATUSES.find((s) => s.value === order.status)
+                    ?.label ?? String(order.status)}
+                </Badge>
+              </td>
+              <td className="px-4 py-3">
+                <Select
+                  value={String(order.status)}
+                  onValueChange={(v) =>
+                    handleStatusChange(order.id, v as OrderStatus)
+                  }
+                >
+                  <SelectTrigger
+                    className="h-8 w-32 text-xs"
+                    data-ocid={`admin.orders.select.${i + 1}`}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ORDER_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={String(s.value)}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { login, clear, loginStatus, identity } = useInternetIdentity();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
@@ -481,7 +629,7 @@ export default function AdminPage() {
         <div className="text-center" data-ocid="admin.access_denied.panel">
           <h2 className="font-display text-2xl font-700 mb-2">Access Denied</h2>
           <p className="text-muted-foreground mb-4">
-            You don't have admin privileges.
+            You don’t have admin privileges.
           </p>
           <Button
             variant="outline"
@@ -531,90 +679,133 @@ export default function AdminPage() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         <RestaurantInfoEditor />
 
-        <div className="bg-card rounded-2xl shadow-card overflow-hidden">
-          <div className="flex items-center justify-between p-6 border-b border-border">
-            <h2 className="font-display font-700 text-lg">
-              Menu Items ({menuItems?.length ?? 0})
-            </h2>
-            <AddItemDialog />
-          </div>
-
-          {loadingItems ? (
-            <div className="p-6 space-y-3" data-ocid="admin.menu.loading_state">
-              {ADMIN_SKELETON_KEYS.map((k) => (
-                <Skeleton key={k} className="h-16 w-full rounded-xl" />
-              ))}
-            </div>
-          ) : menuItems?.length === 0 ? (
-            <div
-              className="p-12 text-center"
-              data-ocid="admin.menu.empty_state"
+        <Tabs defaultValue="menu" className="w-full">
+          <TabsList className="mb-6" data-ocid="admin.tab">
+            <TabsTrigger
+              value="menu"
+              className="gap-2"
+              data-ocid="admin.menu.tab"
             >
-              <p className="text-muted-foreground">
-                No menu items yet. Add your first item!
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {menuItems?.map((item, i) => (
+              <ChefHat className="w-4 h-4" /> Menu Items
+            </TabsTrigger>
+            <TabsTrigger
+              value="orders"
+              className="gap-2"
+              data-ocid="admin.orders.tab"
+            >
+              <ClipboardList className="w-4 h-4" /> Orders
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="menu">
+            <div className="bg-card rounded-2xl shadow-card overflow-hidden">
+              <div className="flex items-center justify-between p-6 border-b border-border">
+                <h2 className="font-display font-700 text-lg">
+                  Menu Items ({menuItems?.length ?? 0})
+                </h2>
+                <AddItemDialog />
+              </div>
+
+              {loadingItems ? (
                 <div
-                  key={item.id.toString()}
-                  className="flex items-center justify-between p-4 gap-3 hover:bg-muted/40 transition-colors"
-                  data-ocid={`admin.menu.item.${i + 1}`}
+                  className="p-6 space-y-3"
+                  data-ocid="admin.menu.loading_state"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm text-foreground truncate">
-                        {item.name}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {item.category}
-                      </Badge>
-                      {!item.isAvailable && (
-                        <Badge variant="destructive" className="text-xs">
-                          Unavailable
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                      {item.description}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <span className="font-display font-700 text-primary text-sm mr-2">
-                      ₹{item.price.toString()}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(item.id)}
-                      className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                      title={
-                        item.isAvailable ? "Mark unavailable" : "Mark available"
-                      }
-                      data-ocid={`admin.menu.toggle.${i + 1}`}
-                    >
-                      {item.isAvailable ? (
-                        <ToggleRight className="w-5 h-5 text-secondary" />
-                      ) : (
-                        <ToggleLeft className="w-5 h-5 text-muted-foreground" />
-                      )}
-                    </button>
-                    <EditItemDialog item={item} />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                      onClick={() => handleDelete(item.id)}
-                      data-ocid={`admin.menu.delete_button.${i + 1}`}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
+                  {ADMIN_SKELETON_KEYS.map((k) => (
+                    <Skeleton key={k} className="h-16 w-full rounded-xl" />
+                  ))}
                 </div>
-              ))}
+              ) : menuItems?.length === 0 ? (
+                <div
+                  className="p-12 text-center"
+                  data-ocid="admin.menu.empty_state"
+                >
+                  <p className="text-muted-foreground">
+                    No menu items yet. Add your first item!
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {menuItems?.map((item, i) => (
+                    <div
+                      key={item.id.toString()}
+                      className="flex items-center justify-between p-4 gap-3 hover:bg-muted/40 transition-colors"
+                      data-ocid={`admin.menu.item.${i + 1}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm text-foreground truncate">
+                            {item.name}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {item.category}
+                          </Badge>
+                          {!item.isAvailable && (
+                            <Badge variant="destructive" className="text-xs">
+                              Unavailable
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {item.description}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <span className="font-display font-700 text-primary text-sm mr-2">
+                          ₹{item.price.toString()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggle(item.id)}
+                          className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                          title={
+                            item.isAvailable
+                              ? "Mark unavailable"
+                              : "Mark available"
+                          }
+                          data-ocid={`admin.menu.toggle.${i + 1}`}
+                        >
+                          {item.isAvailable ? (
+                            <ToggleRight className="w-5 h-5 text-secondary" />
+                          ) : (
+                            <ToggleLeft className="w-5 h-5 text-muted-foreground" />
+                          )}
+                        </button>
+                        <EditItemDialog item={item} />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                          onClick={() => handleDelete(item.id)}
+                          data-ocid={`admin.menu.delete_button.${i + 1}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </TabsContent>
+
+          <TabsContent value="orders">
+            <div className="bg-card rounded-2xl shadow-card overflow-hidden">
+              <div className="p-6 border-b border-border">
+                <h2 className="font-display font-700 text-lg flex items-center gap-2">
+                  <ClipboardList className="w-5 h-5 text-primary" /> Customer
+                  Orders
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Manage and update order statuses in real-time.
+                </p>
+              </div>
+              <div className="p-4">
+                <OrdersTab />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
