@@ -1,155 +1,241 @@
+import Map "mo:core/Map";
+import Iter "mo:core/Iter";
 import Array "mo:core/Array";
+import Runtime "mo:core/Runtime";
+import Nat "mo:core/Nat";
+import Order "mo:core/Order";
+import Text "mo:core/Text";
+import Principal "mo:core/Principal";
+import AccessControl "authorization/access-control";
+import Storage "blob-storage/Storage";
+import MixinStorage "blob-storage/Mixin";
+import MixinAuthorization "authorization/MixinAuthorization";
 
 actor {
+  include MixinStorage();
 
-  public type OrderItem = {
+  type RestaurantInfo = {
     name : Text;
+    address : Text;
+    phoneNumber : Text;
+    email : Text;
+  };
+
+  type MenuItem = {
+    id : Nat;
+    name : Text;
+    description : Text;
     price : Nat;
-    qty : Nat;
-  };
-
-  public type Order = {
-    id : Nat;
-    customerName : Text;
-    phone : Text;
-    items : [OrderItem];
-    total : Nat;
-    payment : Text;
-    status : Text;
-  };
-
-  public type Message = {
-    id : Nat;
-    senderName : Text;
-    content : Text;
-    isAdmin : Bool;
-  };
-
-  public type MenuItem = {
-    id : Nat;
-    name : Text;
     category : Text;
-    price : Nat;
-    ingredients : Text;
+    isAvailable : Bool;
+    image : ?Storage.ExternalBlob;
   };
 
-  var orders : [Order] = [];
-  var messages : [Message] = [];
-  var nextOrderId : Nat = 1;
-  var nextMsgId : Nat = 1;
-
-  var menuItems : [MenuItem] = [
-    { id = 1; name = "Veg Sandwich"; category = "Sandwich"; price = 40; ingredients = "Bread, fresh veggies, tomato, onion, sauces" },
-    { id = 2; name = "Cheese Sandwich"; category = "Sandwich"; price = 60; ingredients = "Bread, cheese, veggies, mayo" },
-    { id = 3; name = "Grilled Sandwich"; category = "Sandwich"; price = 50; ingredients = "Toasted bread, veggies, butter, spices" },
-    { id = 4; name = "Club Sandwich"; category = "Sandwich"; price = 70; ingredients = "Layered bread, veggies, cheese, sauces" },
-    { id = 5; name = "Paneer Sandwich"; category = "Sandwich"; price = 70; ingredients = "Bread, paneer tikka, veggies, mint chutney" },
-    { id = 6; name = "Veg Burger"; category = "Burger"; price = 50; ingredients = "Bun, veg patty, lettuce, tomato, sauces" },
-    { id = 7; name = "Cheese Burger"; category = "Burger"; price = 70; ingredients = "Bun, veg patty, cheese slice, lettuce, mayo" },
-    { id = 8; name = "Paneer Burger"; category = "Burger"; price = 80; ingredients = "Bun, paneer patty, veggies, special sauce" },
-    { id = 9; name = "Veg Chaumin"; category = "Chaumin"; price = 60; ingredients = "Noodles, mixed veggies, soy sauce, spices" },
-    { id = 10; name = "Paneer Chaumin"; category = "Chaumin"; price = 80; ingredients = "Noodles, paneer, veggies, desi twist" },
-    { id = 11; name = "Hakka Noodles"; category = "Chaumin"; price = 70; ingredients = "Hakka noodles, veggies, sauces, spices" },
-    { id = 12; name = "Steamed Momos"; category = "Momos"; price = 60; ingredients = "Flour, veg/paneer filling, dipping sauce" },
-    { id = 13; name = "Fried Momos"; category = "Momos"; price = 70; ingredients = "Crispy fried dumplings, spicy sauce" },
-    { id = 14; name = "Paneer Fried Momos"; category = "Momos"; price = 80; ingredients = "Fried momos with paneer stuffing" },
-    { id = 15; name = "Tandoori Momos"; category = "Momos"; price = 90; ingredients = "Chargrilled momos, tandoori spices, chutney" },
-    { id = 16; name = "Cold Coffee"; category = "Drinks"; price = 50; ingredients = "Coffee, milk, ice, sugar" },
-    { id = 17; name = "Mango Juice"; category = "Drinks"; price = 40; ingredients = "Fresh mango pulp, chilled" },
-    { id = 18; name = "Lemon Soda"; category = "Drinks"; price = 30; ingredients = "Fresh lime, soda water, salt/sugar" },
-    { id = 19; name = "Lassi"; category = "Drinks"; price = 40; ingredients = "Yogurt, sugar, cardamom, chilled" }
-  ];
-
-  let ADMIN_USER = "Swaad_wallah17";
-  let ADMIN_PASS = "VISH2006";
-
-  public func adminLogin(username : Text, password : Text) : async Bool {
-    username == ADMIN_USER and password == ADMIN_PASS
-  };
-
-  public func placeOrder(customerName : Text, phone : Text, items : [OrderItem], payment : Text) : async Nat {
-    var total : Nat = 0;
-    for (item in items.vals()) {
-      total += item.price * item.qty;
+  module MenuItem {
+    public func compare(item1 : MenuItem, item2 : MenuItem) : Order.Order {
+      Nat.compare(item1.id, item2.id);
     };
-    let order : Order = {
-      id = nextOrderId;
-      customerName = customerName;
-      phone = phone;
-      items = items;
-      total = total;
-      payment = payment;
-      status = "Pending";
+  };
+
+  var nextMenuItemId = 1;
+  var restaurantInfo : RestaurantInfo = {
+    name = "Swaad Wallah Sandwich";
+    address = "Indrapuri Sector C, Bhopal";
+    phoneNumber = "+91 98765 43210";
+    email = "swaadwallahbhopal@gmail.com";
+  };
+
+  let menuItems = Map.empty<Nat, MenuItem>();
+  let accessControlState = AccessControl.initState();
+  include MixinAuthorization(accessControlState);
+
+  public query ({ caller }) func getRestaurantInfo() : async RestaurantInfo {
+    restaurantInfo;
+  };
+
+  public query ({ caller }) func getMenuItems() : async [MenuItem] {
+    menuItems.values().toArray().sort();
+  };
+
+  public query ({ caller }) func getMenuItemsByCategory(category : Text) : async [MenuItem] {
+    menuItems.values().toArray().filter(
+      func(item) {
+        Text.equal(item.category, category);
+      }
+    );
+  };
+
+  public query ({ caller }) func getMenuItem(id : Nat) : async MenuItem {
+    switch (menuItems.get(id)) {
+      case (null) { Runtime.trap("Menu item not found") };
+      case (?item) { item };
     };
-    let size = orders.size();
-    orders := Array.tabulate<Order>(size + 1, func(i) {
-      if (i < size) orders[i] else order
-    });
-    nextOrderId += 1;
-    order.id
   };
 
-  public query func getOrders() : async [Order] {
-    orders
+  public query ({ caller }) func getAvailableMenuItems() : async [MenuItem] {
+    menuItems.values().toArray().filter(
+      func(item) { item.isAvailable }
+    );
   };
 
-  public func updateOrderStatus(id : Nat, newStatus : Text) : async Bool {
-    var updated = false;
-    orders := orders.map(func(o : Order) : Order {
-      if (o.id == id) {
-        updated := true;
-        {
-          id = o.id;
-          customerName = o.customerName;
-          phone = o.phone;
-          items = o.items;
-          total = o.total;
-          payment = o.payment;
-          status = newStatus;
-        }
-      } else { o }
-    });
-    updated
-  };
-
-  public func sendMessage(senderName : Text, content : Text, isAdmin : Bool) : async Nat {
-    let msg : Message = {
-      id = nextMsgId;
-      senderName = senderName;
-      content = content;
-      isAdmin = isAdmin;
+  public shared ({ caller }) func addMenuItem(name : Text, description : Text, price : Nat, category : Text, image : ?Storage.ExternalBlob) : async MenuItem {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can add menu items");
     };
-    let size = messages.size();
-    messages := Array.tabulate<Message>(size + 1, func(i) {
-      if (i < size) messages[i] else msg
-    });
-    nextMsgId += 1;
-    msg.id
+    let newItem : MenuItem = {
+      id = nextMenuItemId;
+      name;
+      description;
+      price;
+      category;
+      isAvailable = true;
+      image;
+    };
+    menuItems.add(nextMenuItemId, newItem);
+    nextMenuItemId += 1;
+    newItem;
   };
 
-  public query func getMessages() : async [Message] {
-    messages
+  public shared ({ caller }) func updateMenuItem(id : Nat, name : Text, description : Text, price : Nat, category : Text, image : ?Storage.ExternalBlob) : async MenuItem {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can update menu items");
+    };
+    switch (menuItems.get(id)) {
+      case (null) { Runtime.trap("Menu item not found") };
+      case (?_) {
+        let updatedItem : MenuItem = {
+          id;
+          name;
+          description;
+          price;
+          category;
+          isAvailable = true;
+          image;
+        };
+        menuItems.add(id, updatedItem);
+        updatedItem;
+      };
+    };
   };
 
-  public query func getMenuItems() : async [MenuItem] {
-    menuItems
+  public shared ({ caller }) func deleteMenuItem(id : Nat) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can delete menu items");
+    };
+    if (not menuItems.containsKey(id)) {
+      Runtime.trap("Menu item not found");
+    };
+    menuItems.remove(id);
   };
 
-  public func updateMenuItemPrice(id : Nat, newPrice : Nat) : async Bool {
-    var updated = false;
-    menuItems := menuItems.map(func(m : MenuItem) : MenuItem {
-      if (m.id == id) {
-        updated := true;
-        {
-          id = m.id;
-          name = m.name;
-          category = m.category;
-          price = newPrice;
-          ingredients = m.ingredients;
-        }
-      } else { m }
-    });
-    updated
+  public shared ({ caller }) func toggleMenuItemAvailability(id : Nat) : async MenuItem {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can toggle menu item availability");
+    };
+    switch (menuItems.get(id)) {
+      case (null) { Runtime.trap("Menu item not found") };
+      case (?item) {
+        let updatedItem : MenuItem = {
+          id = item.id;
+          name = item.name;
+          description = item.description;
+          price = item.price;
+          category = item.category;
+          isAvailable = not item.isAvailable;
+          image = item.image;
+        };
+        menuItems.add(id, updatedItem);
+        updatedItem;
+      };
+    };
   };
 
+  public shared ({ caller }) func updateRestaurantInfo(name : Text, address : Text, phoneNumber : Text, email : Text) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can update restaurant info");
+    };
+    restaurantInfo := {
+      name;
+      address;
+      phoneNumber;
+      email;
+    };
+  };
+
+  public shared ({ caller }) func seedDatabaseIfEmpty() : async () {
+    if (menuItems.isEmpty()) {
+      let initialItems : [(Text, Text, Nat, Text)] = [
+        // Sandwiches
+        ("Plain Veg Sandwich", "Fresh veggies with green chutney in soft bread", 40, "Sandwich"),
+        ("Grilled Veg Sandwich", "Toasted sandwich with veggies, cheese and spices", 70, "Sandwich"),
+        ("Bombay Style Sandwich", "Mumbai-style layered sandwich with potato, chutney & masala", 80, "Sandwich"),
+        ("Club Sandwich", "Triple-decker with veggies, cheese and tangy sauces", 90, "Sandwich"),
+        ("Aloo Tikki Sandwich", "Crispy potato tikki with chutneys and veggies", 70, "Sandwich"),
+        ("Paneer Tikka Sandwich", "Grilled cottage cheese marinated in spices with peppers", 100, "Sandwich"),
+        ("Cheese Grilled Sandwich", "Loaded with melted cheese, veggies and secret masala", 90, "Sandwich"),
+        ("Corn & Cheese Sandwich", "Sweet corn with cheese spread and herbs", 85, "Sandwich"),
+        ("Veg Mayo Sandwich", "Fresh veggies tossed in creamy mayo sauce", 75, "Sandwich"),
+        ("Mushroom Cheese Sandwich", "Sautéed mushrooms with melted cheese and herbs", 95, "Sandwich"),
+        ("Schezwan Veg Sandwich", "Spicy Indo-Chinese style with schezwan sauce", 85, "Sandwich"),
+        ("Double Cheese Sandwich", "Extra cheese overloaded sandwich with veggies", 100, "Sandwich"),
+        // Burgers
+        ("Veg Burger", "Crispy veg patty with lettuce, tomato and sauces", 60, "Burger"),
+        ("Aloo Tikki Burger", "Classic potato tikki burger with chutney and veggies", 70, "Burger"),
+        ("Paneer Burger", "Juicy grilled paneer patty with cheese and veggies", 90, "Burger"),
+        ("Cheese Burger", "Double cheese patty with fresh veggies and special sauce", 85, "Burger"),
+        ("Mushroom Burger", "Sautéed mushroom patty with garlic mayo", 85, "Burger"),
+        ("Spicy Veg Burger", "Fiery spiced patty with jalapenos and spicy sauce", 80, "Burger"),
+        // Beverages
+        ("Cold Coffee", "Chilled blended coffee with milk and sugar", 60, "Beverage"),
+        ("Fresh Lime Soda", "Refreshing lime juice with soda and masala", 40, "Beverage"),
+        ("Chocolate Milkshake", "Thick creamy chocolate milkshake", 80, "Beverage"),
+        ("Strawberry Milkshake", "Fresh strawberry blended milkshake", 80, "Beverage"),
+        ("Mango Shake", "Thick fresh mango milkshake", 70, "Beverage"),
+        ("Masala Chai", "Freshly brewed spiced Indian tea", 20, "Beverage"),
+        // Snacks
+        ("French Fries", "Crispy golden salted fries with ketchup", 60, "Snack"),
+        ("Masala Fries", "Spiced fries with chaat masala and chutney", 70, "Snack"),
+        ("Nachos", "Crunchy nachos with salsa and cheese dip", 80, "Snack"),
+        ("Veg Puff", "Flaky pastry filled with spiced vegetable filling", 30, "Snack")
+      ];
+
+      var id = 1;
+      for ((name, desc, price, cat) in initialItems.vals()) {
+        let item : MenuItem = {
+          id;
+          name;
+          description = desc;
+          price;
+          category = cat;
+          isAvailable = true;
+          image = null;
+        };
+        menuItems.add(id, item);
+        id += 1;
+      };
+      nextMenuItemId := id;
+    };
+  };
+
+  public shared ({ caller }) func deleteAllDataAndInitialize() : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can initialize database");
+    };
+    menuItems.clear();
+    nextMenuItemId := 1;
+    restaurantInfo := {
+      name = "Swaad Wallah Sandwich";
+      address = "Indrapuri Sector C, Bhopal";
+      phoneNumber = "+91 98765 43210";
+      email = "swaadwallahbhopal@gmail.com";
+    };
+  };
+
+  public query ({ caller }) func filterMenu(searchTerm : Text) : async [MenuItem] {
+    menuItems.values().toArray().filter(
+      func(item) {
+        item.name.contains(#text searchTerm) or item.description.contains(#text searchTerm) or item.category.contains(#text searchTerm)
+      }
+    );
+  };
 };

@@ -8,33 +8,197 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
-export const SocialMedia = IDL.Record({ 'instagram' : IDL.Text });
-export const BusinessProfile = IDL.Record({
-  'hours' : IDL.Text,
+export const _CaffeineStorageCreateCertificateResult = IDL.Record({
+  'method' : IDL.Text,
+  'blob_hash' : IDL.Text,
+});
+export const _CaffeineStorageRefillInformation = IDL.Record({
+  'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const _CaffeineStorageRefillResult = IDL.Record({
+  'success' : IDL.Opt(IDL.Bool),
+  'topped_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const MenuItem = IDL.Record({
+  'id' : IDL.Nat,
   'name' : IDL.Text,
+  'isAvailable' : IDL.Bool,
   'description' : IDL.Text,
+  'category' : IDL.Text,
+  'image' : IDL.Opt(ExternalBlob),
+  'price' : IDL.Nat,
+});
+export const UserRole = IDL.Variant({
+  'admin' : IDL.Null,
+  'user' : IDL.Null,
+  'guest' : IDL.Null,
+});
+export const RestaurantInfo = IDL.Record({
+  'name' : IDL.Text,
+  'email' : IDL.Text,
   'address' : IDL.Text,
-  'socialMedia' : SocialMedia,
+  'phoneNumber' : IDL.Text,
 });
 
 export const idlService = IDL.Service({
-  'getBusinessInfo' : IDL.Func([], [BusinessProfile], ['query']),
+  '_caffeineStorageBlobIsLive' : IDL.Func(
+      [IDL.Vec(IDL.Nat8)],
+      [IDL.Bool],
+      ['query'],
+    ),
+  '_caffeineStorageBlobsToDelete' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      ['query'],
+    ),
+  '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      [],
+      [],
+    ),
+  '_caffeineStorageCreateCertificate' : IDL.Func(
+      [IDL.Text],
+      [_CaffeineStorageCreateCertificateResult],
+      [],
+    ),
+  '_caffeineStorageRefillCashier' : IDL.Func(
+      [IDL.Opt(_CaffeineStorageRefillInformation)],
+      [_CaffeineStorageRefillResult],
+      [],
+    ),
+  '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'addMenuItem' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob)],
+      [MenuItem],
+      [],
+    ),
+  'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'deleteAllDataAndInitialize' : IDL.Func([], [], []),
+  'deleteMenuItem' : IDL.Func([IDL.Nat], [], []),
+  'filterMenu' : IDL.Func([IDL.Text], [IDL.Vec(MenuItem)], ['query']),
+  'getAvailableMenuItems' : IDL.Func([], [IDL.Vec(MenuItem)], ['query']),
+  'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getMenuItem' : IDL.Func([IDL.Nat], [MenuItem], ['query']),
+  'getMenuItems' : IDL.Func([], [IDL.Vec(MenuItem)], ['query']),
+  'getMenuItemsByCategory' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(MenuItem)],
+      ['query'],
+    ),
+  'getRestaurantInfo' : IDL.Func([], [RestaurantInfo], ['query']),
+  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'seedDatabaseIfEmpty' : IDL.Func([], [], []),
+  'toggleMenuItemAvailability' : IDL.Func([IDL.Nat], [MenuItem], []),
+  'updateMenuItem' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Text, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob)],
+      [MenuItem],
+      [],
+    ),
+  'updateRestaurantInfo' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+      [],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
-  const SocialMedia = IDL.Record({ 'instagram' : IDL.Text });
-  const BusinessProfile = IDL.Record({
-    'hours' : IDL.Text,
+  const _CaffeineStorageCreateCertificateResult = IDL.Record({
+    'method' : IDL.Text,
+    'blob_hash' : IDL.Text,
+  });
+  const _CaffeineStorageRefillInformation = IDL.Record({
+    'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const _CaffeineStorageRefillResult = IDL.Record({
+    'success' : IDL.Opt(IDL.Bool),
+    'topped_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const MenuItem = IDL.Record({
+    'id' : IDL.Nat,
     'name' : IDL.Text,
+    'isAvailable' : IDL.Bool,
     'description' : IDL.Text,
+    'category' : IDL.Text,
+    'image' : IDL.Opt(ExternalBlob),
+    'price' : IDL.Nat,
+  });
+  const UserRole = IDL.Variant({
+    'admin' : IDL.Null,
+    'user' : IDL.Null,
+    'guest' : IDL.Null,
+  });
+  const RestaurantInfo = IDL.Record({
+    'name' : IDL.Text,
+    'email' : IDL.Text,
     'address' : IDL.Text,
-    'socialMedia' : SocialMedia,
+    'phoneNumber' : IDL.Text,
   });
   
   return IDL.Service({
-    'getBusinessInfo' : IDL.Func([], [BusinessProfile], ['query']),
+    '_caffeineStorageBlobIsLive' : IDL.Func(
+        [IDL.Vec(IDL.Nat8)],
+        [IDL.Bool],
+        ['query'],
+      ),
+    '_caffeineStorageBlobsToDelete' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
+    '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        [],
+        [],
+      ),
+    '_caffeineStorageCreateCertificate' : IDL.Func(
+        [IDL.Text],
+        [_CaffeineStorageCreateCertificateResult],
+        [],
+      ),
+    '_caffeineStorageRefillCashier' : IDL.Func(
+        [IDL.Opt(_CaffeineStorageRefillInformation)],
+        [_CaffeineStorageRefillResult],
+        [],
+      ),
+    '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'addMenuItem' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob)],
+        [MenuItem],
+        [],
+      ),
+    'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'deleteAllDataAndInitialize' : IDL.Func([], [], []),
+    'deleteMenuItem' : IDL.Func([IDL.Nat], [], []),
+    'filterMenu' : IDL.Func([IDL.Text], [IDL.Vec(MenuItem)], ['query']),
+    'getAvailableMenuItems' : IDL.Func([], [IDL.Vec(MenuItem)], ['query']),
+    'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getMenuItem' : IDL.Func([IDL.Nat], [MenuItem], ['query']),
+    'getMenuItems' : IDL.Func([], [IDL.Vec(MenuItem)], ['query']),
+    'getMenuItemsByCategory' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(MenuItem)],
+        ['query'],
+      ),
+    'getRestaurantInfo' : IDL.Func([], [RestaurantInfo], ['query']),
+    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'seedDatabaseIfEmpty' : IDL.Func([], [], []),
+    'toggleMenuItemAvailability' : IDL.Func([IDL.Nat], [MenuItem], []),
+    'updateMenuItem' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Text, IDL.Nat, IDL.Text, IDL.Opt(ExternalBlob)],
+        [MenuItem],
+        [],
+      ),
+    'updateRestaurantInfo' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
+        [],
+        [],
+      ),
   });
 };
 

@@ -1,57 +1,54 @@
 import type { Principal } from "@icp-sdk/core/principal";
-
 export interface Some<T> {
-  __kind__: "Some";
-  value: T;
+    __kind__: "Some";
+    value: T;
 }
 export interface None {
-  __kind__: "None";
+    __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-
-export interface OrderItem {
-  name: string;
-  price: bigint;
-  qty: bigint;
+export class ExternalBlob {
+    getBytes(): Promise<Uint8Array<ArrayBuffer>>;
+    getDirectURL(): string;
+    static fromURL(url: string): ExternalBlob;
+    static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
+    withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
-
-export interface Order {
-  id: bigint;
-  customerName: string;
-  phone: string;
-  items: Array<OrderItem>;
-  total: bigint;
-  payment: string;
-  status: string;
-}
-
-export interface Message {
-  id: bigint;
-  senderName: string;
-  content: string;
-  isAdmin: boolean;
-}
-
 export interface MenuItem {
-  id: bigint;
-  name: string;
-  category: string;
-  price: bigint;
-  ingredients: string;
+    id: bigint;
+    name: string;
+    isAvailable: boolean;
+    description: string;
+    category: string;
+    image?: ExternalBlob;
+    price: bigint;
 }
-
+export interface RestaurantInfo {
+    name: string;
+    email: string;
+    address: string;
+    phoneNumber: string;
+}
+export enum UserRole {
+    admin = "admin",
+    user = "user",
+    guest = "guest"
+}
 export interface backendInterface {
-  adminLogin(username: string, password: string): Promise<boolean>;
-  placeOrder(
-    customerName: string,
-    phone: string,
-    items: Array<OrderItem>,
-    payment: string
-  ): Promise<bigint>;
-  getOrders(): Promise<Array<Order>>;
-  updateOrderStatus(id: bigint, newStatus: string): Promise<boolean>;
-  sendMessage(senderName: string, content: string, isAdmin: boolean): Promise<bigint>;
-  getMessages(): Promise<Array<Message>>;
-  getMenuItems(): Promise<Array<MenuItem>>;
-  updateMenuItemPrice(id: bigint, newPrice: bigint): Promise<boolean>;
+    addMenuItem(name: string, description: string, price: bigint, category: string, image: ExternalBlob | null): Promise<MenuItem>;
+    assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteAllDataAndInitialize(): Promise<void>;
+    deleteMenuItem(id: bigint): Promise<void>;
+    filterMenu(searchTerm: string): Promise<Array<MenuItem>>;
+    getAvailableMenuItems(): Promise<Array<MenuItem>>;
+    getCallerUserRole(): Promise<UserRole>;
+    getMenuItem(id: bigint): Promise<MenuItem>;
+    getMenuItems(): Promise<Array<MenuItem>>;
+    getMenuItemsByCategory(category: string): Promise<Array<MenuItem>>;
+    getRestaurantInfo(): Promise<RestaurantInfo>;
+    isCallerAdmin(): Promise<boolean>;
+    seedDatabaseIfEmpty(): Promise<void>;
+    toggleMenuItemAvailability(id: bigint): Promise<MenuItem>;
+    updateMenuItem(id: bigint, name: string, description: string, price: bigint, category: string, image: ExternalBlob | null): Promise<MenuItem>;
+    updateRestaurantInfo(name: string, address: string, phoneNumber: string, email: string): Promise<void>;
 }

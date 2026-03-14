@@ -10,16 +10,78 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface BusinessProfile {
-  'hours' : string,
+export type ExternalBlob = Uint8Array;
+export interface MenuItem {
+  'id' : bigint,
   'name' : string,
+  'isAvailable' : boolean,
   'description' : string,
-  'address' : string,
-  'socialMedia' : SocialMedia,
+  'category' : string,
+  'image' : [] | [ExternalBlob],
+  'price' : bigint,
 }
-export interface SocialMedia { 'instagram' : string }
+export interface RestaurantInfo {
+  'name' : string,
+  'email' : string,
+  'address' : string,
+  'phoneNumber' : string,
+}
+export type UserRole = { 'admin' : null } |
+  { 'user' : null } |
+  { 'guest' : null };
+export interface _CaffeineStorageCreateCertificateResult {
+  'method' : string,
+  'blob_hash' : string,
+}
+export interface _CaffeineStorageRefillInformation {
+  'proposed_top_up_amount' : [] | [bigint],
+}
+export interface _CaffeineStorageRefillResult {
+  'success' : [] | [boolean],
+  'topped_up_amount' : [] | [bigint],
+}
 export interface _SERVICE {
-  'getBusinessInfo' : ActorMethod<[], BusinessProfile>,
+  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
+  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+    [Array<Uint8Array>],
+    undefined
+  >,
+  '_caffeineStorageCreateCertificate' : ActorMethod<
+    [string],
+    _CaffeineStorageCreateCertificateResult
+  >,
+  '_caffeineStorageRefillCashier' : ActorMethod<
+    [[] | [_CaffeineStorageRefillInformation]],
+    _CaffeineStorageRefillResult
+  >,
+  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
+  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'addMenuItem' : ActorMethod<
+    [string, string, bigint, string, [] | [ExternalBlob]],
+    MenuItem
+  >,
+  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteAllDataAndInitialize' : ActorMethod<[], undefined>,
+  'deleteMenuItem' : ActorMethod<[bigint], undefined>,
+  'filterMenu' : ActorMethod<[string], Array<MenuItem>>,
+  'getAvailableMenuItems' : ActorMethod<[], Array<MenuItem>>,
+  'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getMenuItem' : ActorMethod<[bigint], MenuItem>,
+  'getMenuItems' : ActorMethod<[], Array<MenuItem>>,
+  'getMenuItemsByCategory' : ActorMethod<[string], Array<MenuItem>>,
+  'getRestaurantInfo' : ActorMethod<[], RestaurantInfo>,
+  'isCallerAdmin' : ActorMethod<[], boolean>,
+  'seedDatabaseIfEmpty' : ActorMethod<[], undefined>,
+  'toggleMenuItemAvailability' : ActorMethod<[bigint], MenuItem>,
+  'updateMenuItem' : ActorMethod<
+    [bigint, string, string, bigint, string, [] | [ExternalBlob]],
+    MenuItem
+  >,
+  'updateRestaurantInfo' : ActorMethod<
+    [string, string, string, string],
+    undefined
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
