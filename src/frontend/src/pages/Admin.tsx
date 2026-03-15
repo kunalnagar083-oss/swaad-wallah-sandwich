@@ -20,10 +20,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ChefHat,
   ClipboardList,
   Edit2,
+  Eye,
+  EyeOff,
   LogOut,
   Plus,
   Save,
@@ -35,8 +38,9 @@ import {
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import type { MenuItem } from "../backend.d";
+import type { MenuItem, backendInterface } from "../backend.d";
 import { OrderStatus } from "../backend.d";
+import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useAddMenuItem,
@@ -559,14 +563,101 @@ function OrdersTab() {
   );
 }
 
+async function doClaimAdmin(
+  u: string,
+  p: string,
+  actor: backendInterface,
+): Promise<boolean> {
+  return actor.claimAdminWithPassword(u, p);
+}
+
 export default function AdminPage() {
-  const { login, clear, loginStatus, identity } = useInternetIdentity();
+  const { login, clear, identity, isInitializing } = useInternetIdentity();
+  const { actor, isFetching: actorFetching } = useActor();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
   const { data: menuItems, isLoading: loadingItems } = useGetAllMenuItems();
   const deleteItem = useDeleteMenuItem();
   const toggleAvail = useToggleMenuItemAvailability();
+  const queryClient = useQueryClient();
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [waitingForII, setWaitingForII] = useState(false);
+  const [pendingCreds, setPendingCreds] = useState<{
+    u: string;
+    p: string;
+  } | null>(null);
 
   const isLoggedIn = !!identity;
+
+  // After II login completes, if we have pending credentials, claim admin
+  if (waitingForII && isLoggedIn && actor && !actorFetching && pendingCreds) {
+    const { u, p } = pendingCreds;
+    setPendingCreds(null);
+    setWaitingForII(false);
+    setIsSubmitting(true);
+    doClaimAdmin(u, p, actor)
+      .then((success) => {
+        if (success) {
+          queryClient.invalidateQueries({ queryKey: ["isAdmin"] });
+          queryClient.refetchQueries({ queryKey: ["isAdmin"] });
+        } else {
+          setLoginError("Wrong username or password. Please try again.");
+          clear();
+        }
+      })
+      .catch(() => setLoginError("Login failed. Please try again."))
+      .finally(() => setIsSubmitting(false));
+  }
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setIsSubmitting(true);
+
+    if (!username.trim() || !password.trim()) {
+      setLoginError("Please enter your username and password.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // If already logged in with II, try to claim admin directly
+    if (isLoggedIn && actor && !actorFetching) {
+      try {
+        const success = await doClaimAdmin(username, password, actor);
+        if (success) {
+          await queryClient.invalidateQueries({ queryKey: ["isAdmin"] });
+          await queryClient.refetchQueries({ queryKey: ["isAdmin"] });
+        } else {
+          setLoginError("Wrong username or password. Please try again.");
+        }
+      } catch {
+        setLoginError("Login failed. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Not logged in with II -- save credentials and trigger II login
+    setPendingCreds({ u: username, p: password });
+    setWaitingForII(true);
+    setIsSubmitting(false);
+    login();
+  };
+
+  const handleLogout = () => {
+    clear();
+    setUsername("");
+    setPassword("");
+    setLoginError("");
+    setPendingCreds(null);
+    setWaitingForII(false);
+    queryClient.clear();
+  };
 
   const handleDelete = async (id: bigint) => {
     try {
@@ -586,59 +677,120 @@ export default function AdminPage() {
     }
   };
 
-  if (!isLoggedIn) {
+  // Show loading while II initializes
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center" data-ocid="admin.loading_state">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login form if not admin yet
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-card rounded-3xl shadow-card p-10 max-w-sm w-full text-center"
+          className="bg-card rounded-3xl shadow-card p-10 max-w-sm w-full"
           data-ocid="admin.login.panel"
         >
-          <div className="w-14 h-14 rounded-full bg-primary mx-auto flex items-center justify-center mb-5">
-            <ChefHat className="w-7 h-7 text-primary-foreground" />
+          <div className="text-center mb-7">
+            <div className="w-14 h-14 rounded-full bg-primary mx-auto flex items-center justify-center mb-4">
+              <ChefHat className="w-7 h-7 text-primary-foreground" />
+            </div>
+            <h1 className="font-display text-2xl font-800 mb-1">Admin Login</h1>
+            <p className="text-muted-foreground text-sm">
+              Enter your admin credentials to continue.
+            </p>
           </div>
-          <h1 className="font-display text-2xl font-800 mb-2">Admin Panel</h1>
-          <p className="text-muted-foreground text-sm mb-6">
-            Login to manage your menu and restaurant settings.
-          </p>
-          <Button
-            onClick={() => login()}
-            disabled={loginStatus === "logging-in"}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 font-semibold"
-            data-ocid="admin.login.primary_button"
-          >
-            {loginStatus === "logging-in"
-              ? "Connecting..."
-              : "Login with Internet Identity"}
-          </Button>
+
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="admin-username">Username</Label>
+              <Input
+                id="admin-username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter username"
+                autoComplete="username"
+                disabled={isSubmitting || waitingForII}
+                data-ocid="admin.login.input"
+              />
+            </div>
+            <div>
+              <Label htmlFor="admin-password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="admin-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  autoComplete="current-password"
+                  disabled={isSubmitting || waitingForII}
+                  className="pr-10"
+                  data-ocid="admin.login.input"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {loginError && (
+              <p
+                className="text-destructive text-sm"
+                data-ocid="admin.login.error_state"
+              >
+                {loginError}
+              </p>
+            )}
+
+            {waitingForII && (
+              <p
+                className="text-muted-foreground text-xs text-center"
+                data-ocid="admin.login.loading_state"
+              >
+                Please complete the verification popup to continue...
+              </p>
+            )}
+
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting || waitingForII || (isLoggedIn && checkingAdmin)
+              }
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 font-semibold"
+              data-ocid="admin.login.primary_button"
+            >
+              {isSubmitting || waitingForII || (isLoggedIn && checkingAdmin)
+                ? "Logging in..."
+                : "Login"}
+            </Button>
+          </form>
+
           <a
             href="/"
-            className="mt-4 inline-block text-sm text-muted-foreground hover:text-primary transition-colors"
+            className="mt-5 block text-center text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             ← Back to website
           </a>
         </motion.div>
-      </div>
-    );
-  }
-
-  if (!checkingAdmin && !isAdmin) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center" data-ocid="admin.access_denied.panel">
-          <h2 className="font-display text-2xl font-700 mb-2">Access Denied</h2>
-          <p className="text-muted-foreground mb-4">
-            You don’t have admin privileges.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => clear()}
-            data-ocid="admin.logout.button"
-          >
-            Logout
-          </Button>
-        </div>
       </div>
     );
   }
@@ -667,7 +819,7 @@ export default function AdminPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => clear()}
+            onClick={handleLogout}
             className="flex items-center gap-1.5"
             data-ocid="admin.logout.button"
           >

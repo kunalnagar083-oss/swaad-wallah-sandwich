@@ -153,6 +153,7 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addMenuItem(name: string, description: string, price: bigint, category: string, image: ExternalBlob | null): Promise<MenuItem>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    claimAdminWithPassword(username: string, password: string): Promise<boolean>;
     deleteAllDataAndInitialize(): Promise<void>;
     deleteMenuItem(id: bigint): Promise<void>;
     filterMenu(searchTerm: string): Promise<Array<MenuItem>>;
@@ -301,6 +302,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n14(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async claimAdminWithPassword(arg0: string, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.claimAdminWithPassword(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.claimAdminWithPassword(arg0, arg1);
             return result;
         }
     }

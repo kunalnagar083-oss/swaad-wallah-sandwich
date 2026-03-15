@@ -77,6 +77,7 @@ export interface _SERVICE {
     MenuItem
   >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'claimAdminWithPassword' : ActorMethod<[string, string], boolean>,
   'deleteAllDataAndInitialize' : ActorMethod<[], undefined>,
   'deleteMenuItem' : ActorMethod<[bigint], undefined>,
   'filterMenu' : ActorMethod<[string], Array<MenuItem>>,

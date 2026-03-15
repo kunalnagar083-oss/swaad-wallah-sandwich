@@ -60,6 +60,7 @@ export enum UserRole {
 export interface backendInterface {
     addMenuItem(name: string, description: string, price: bigint, category: string, image: ExternalBlob | null): Promise<MenuItem>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    claimAdminWithPassword(username: string, password: string): Promise<boolean>;
     deleteAllDataAndInitialize(): Promise<void>;
     deleteMenuItem(id: bigint): Promise<void>;
     filterMenu(searchTerm: string): Promise<Array<MenuItem>>;

@@ -127,6 +127,19 @@ actor {
     nextMenuItemId := id;
   };
 
+  // Admin credential-based login: grants admin role to caller if credentials match
+  public shared ({ caller }) func claimAdminWithPassword(username : Text, password : Text) : async Bool {
+    if (caller.isAnonymous()) {
+      return false;
+    };
+    if (Text.equal(username, "swaad_wallah17") and Text.equal(password, "VISH2006")) {
+      accessControlState.userRoles.add(caller, #admin);
+      accessControlState.adminAssigned := true;
+      return true;
+    };
+    return false;
+  };
+
   public query ({ caller }) func getRestaurantInfo() : async RestaurantInfo {
     restaurantInfo;
   };
