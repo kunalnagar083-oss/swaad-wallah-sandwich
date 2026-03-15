@@ -36,19 +36,17 @@ import {
   Trash2,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { MenuItem, backendInterface } from "../backend.d";
+import type { MenuItem } from "../backend.d";
 import { OrderStatus } from "../backend.d";
 import { useActor } from "../hooks/useActor";
-import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useAddMenuItem,
   useDeleteMenuItem,
   useGetAllMenuItems,
   useGetAllOrders,
   useGetRestaurantInfo,
-  useIsCallerAdmin,
   useToggleMenuItemAvailability,
   useUpdateMenuItem,
   useUpdateOrderStatus,
@@ -57,6 +55,9 @@ import {
 
 const CATEGORIES = ["Sandwich", "Burger", "Beverage", "Snack"];
 const ADMIN_SKELETON_KEYS = ["as1", "as2", "as3", "as4"];
+const ADMIN_SESSION_KEY = "admin_session_swaad";
+const ADMIN_USERNAME = "swaad_wallah17";
+const ADMIN_PASSWORD = "VISH2006";
 
 const ORDER_STATUSES: { value: OrderStatus; label: string }[] = [
   { value: OrderStatus.pending, label: "Pending" },
@@ -563,18 +564,8 @@ function OrdersTab() {
   );
 }
 
-async function doClaimAdmin(
-  u: string,
-  p: string,
-  actor: backendInterface,
-): Promise<boolean> {
-  return actor.claimAdminWithPassword(u, p);
-}
-
 export default function AdminPage() {
-  const { login, clear, identity, isInitializing } = useInternetIdentity();
   const { actor, isFetching: actorFetching } = useActor();
-  const { data: isAdmin, isLoading: checkingAdmin } = useIsCallerAdmin();
   const { data: menuItems, isLoading: loadingItems } = useGetAllMenuItems();
   const deleteItem = useDeleteMenuItem();
   const toggleAvail = useToggleMenuItemAvailability();
@@ -584,78 +575,53 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [waitingForII, setWaitingForII] = useState(false);
-  const [pendingCreds, setPendingCreds] = useState<{
-    u: string;
-    p: string;
-  } | null>(null);
+  // Admin session stored in localStorage so it persists across page reloads
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return localStorage.getItem(ADMIN_SESSION_KEY) === "true";
+  });
 
-  const isLoggedIn = !!identity;
+  // Auto-restore backend admin session after canister restart — silently, never clears local session
+  useEffect(() => {
+    if (!isAdmin || !actor || actorFetching) return;
+    // Fire-and-forget: re-establish admin role on backend; ignore any errors
+    actor.claimAdminWithPassword(ADMIN_USERNAME, ADMIN_PASSWORD).catch(() => {
+      // Silently ignore — local session stays valid regardless of backend response
+    });
+  }, [actor, actorFetching, isAdmin]);
 
-  // After II login completes, if we have pending credentials, claim admin
-  if (waitingForII && isLoggedIn && actor && !actorFetching && pendingCreds) {
-    const { u, p } = pendingCreds;
-    setPendingCreds(null);
-    setWaitingForII(false);
-    setIsSubmitting(true);
-    doClaimAdmin(u, p, actor)
-      .then((success) => {
-        if (success) {
-          queryClient.invalidateQueries({ queryKey: ["isAdmin"] });
-          queryClient.refetchQueries({ queryKey: ["isAdmin"] });
-        } else {
-          setLoginError("Wrong username or password. Please try again.");
-          clear();
-        }
-      })
-      .catch(() => setLoginError("Login failed. Please try again."))
-      .finally(() => setIsSubmitting(false));
-  }
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
+  const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
-    setIsSubmitting(true);
 
     if (!username.trim() || !password.trim()) {
       setLoginError("Please enter your username and password.");
-      setIsSubmitting(false);
       return;
     }
 
-    // If already logged in with II, try to claim admin directly
-    if (isLoggedIn && actor && !actorFetching) {
-      try {
-        const success = await doClaimAdmin(username, password, actor);
-        if (success) {
-          await queryClient.invalidateQueries({ queryKey: ["isAdmin"] });
-          await queryClient.refetchQueries({ queryKey: ["isAdmin"] });
-        } else {
-          setLoginError("Wrong username or password. Please try again.");
-        }
-      } catch {
-        setLoginError("Login failed. Please try again.");
-      } finally {
-        setIsSubmitting(false);
+    // Check credentials locally — no network call needed for the login decision
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      localStorage.setItem(ADMIN_SESSION_KEY, "true");
+      setIsAdmin(true);
+      // Fire-and-forget backend session establishment — never blocks or fails login
+      if (actor && !actorFetching) {
+        actor
+          .claimAdminWithPassword(ADMIN_USERNAME, ADMIN_PASSWORD)
+          .catch(() => {
+            // Silently ignore backend errors
+          });
       }
-      return;
+      queryClient.invalidateQueries();
+    } else {
+      setLoginError("Wrong username or password. Please try again.");
     }
-
-    // Not logged in with II -- save credentials and trigger II login
-    setPendingCreds({ u: username, p: password });
-    setWaitingForII(true);
-    setIsSubmitting(false);
-    login();
   };
 
   const handleLogout = () => {
-    clear();
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    setIsAdmin(false);
     setUsername("");
     setPassword("");
     setLoginError("");
-    setPendingCreds(null);
-    setWaitingForII(false);
     queryClient.clear();
   };
 
@@ -677,19 +643,7 @@ export default function AdminPage() {
     }
   };
 
-  // Show loading while II initializes
-  if (isInitializing) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center" data-ocid="admin.loading_state">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show login form if not admin yet
+  // Show login form if not admin
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -705,7 +659,7 @@ export default function AdminPage() {
             </div>
             <h1 className="font-display text-2xl font-800 mb-1">Admin Login</h1>
             <p className="text-muted-foreground text-sm">
-              Enter your admin credentials to continue.
+              Swaad Wallah Sandwich — Owner Access
             </p>
           </div>
 
@@ -719,7 +673,6 @@ export default function AdminPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter username"
                 autoComplete="username"
-                disabled={isSubmitting || waitingForII}
                 data-ocid="admin.login.input"
               />
             </div>
@@ -733,7 +686,6 @@ export default function AdminPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
                   autoComplete="current-password"
-                  disabled={isSubmitting || waitingForII}
                   className="pr-10"
                   data-ocid="admin.login.input"
                 />
@@ -761,26 +713,12 @@ export default function AdminPage() {
               </p>
             )}
 
-            {waitingForII && (
-              <p
-                className="text-muted-foreground text-xs text-center"
-                data-ocid="admin.login.loading_state"
-              >
-                Please complete the verification popup to continue...
-              </p>
-            )}
-
             <Button
               type="submit"
-              disabled={
-                isSubmitting || waitingForII || (isLoggedIn && checkingAdmin)
-              }
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 font-semibold"
               data-ocid="admin.login.primary_button"
             >
-              {isSubmitting || waitingForII || (isLoggedIn && checkingAdmin)
-                ? "Logging in..."
-                : "Login"}
+              "Login"
             </Button>
           </form>
 

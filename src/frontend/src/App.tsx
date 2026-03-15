@@ -8,9 +8,14 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { CartProvider } from "./context/CartContext";
+import AboutPage from "./pages/AboutPage";
 import AdminPage from "./pages/Admin";
+import GalleryPage from "./pages/GalleryPage";
 import HomePage from "./pages/Home";
+import MenuPage from "./pages/MenuPage";
+import OrderPage from "./pages/OrderPage";
 import OrdersPage from "./pages/Orders";
+import ProfilePage from "./pages/ProfilePage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,7 +50,46 @@ const ordersRoute = createRoute({
   component: OrdersPage,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, adminRoute, ordersRoute]);
+const menuRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/menu",
+  component: MenuPage,
+});
+
+const aboutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/about",
+  component: AboutPage,
+});
+
+const galleryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/gallery",
+  component: GalleryPage,
+});
+
+const orderRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/order",
+  component: OrderPage,
+});
+
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/profile",
+  component: ProfilePage,
+});
+
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  adminRoute,
+  ordersRoute,
+  menuRoute,
+  aboutRoute,
+  galleryRoute,
+  orderRoute,
+  profileRoute,
+]);
 const router = createRouter({ routeTree });
 
 declare module "@tanstack/react-router" {

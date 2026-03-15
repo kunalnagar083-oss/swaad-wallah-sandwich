@@ -22,21 +22,25 @@ import { useGetCustomerProfile } from "../hooks/useQueries";
 import ProfileSetupModal from "./ProfileSetupModal";
 
 const navLinks = [
-  { label: "Home", href: "#home" },
-  { label: "Menu", href: "#menu" },
-  { label: "About", href: "#about" },
-  { label: "Gallery", href: "#gallery" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home", href: "/" },
+  { label: "Menu", href: "/menu" },
+  { label: "About", href: "/about" },
+  { label: "Gallery", href: "/gallery" },
+  { label: "Order", href: "/order" },
+  { label: "Profile", href: "/profile" },
 ];
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { login, clear, loginStatus, identity } = useInternetIdentity();
+  const { clear, identity } = useInternetIdentity();
   const isLoggedIn = !!identity;
   const { data: profile, isLoading: profileLoading } = useGetCustomerProfile();
   const [showProfileSetup, setShowProfileSetup] = useState(false);
   const { totalCount, setIsOpen: openCart } = useCart();
+
+  const currentPath =
+    typeof window !== "undefined" ? window.location.pathname : "/";
 
   // When newly logged in and no profile exists, show setup modal
   useEffect(() => {
@@ -51,10 +55,9 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  const handleNavClick = (href: string) => {
-    setMobileOpen(false);
-    const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+  const isActive = (href: string) => {
+    if (href === "/") return currentPath === "/";
+    return currentPath.startsWith(href);
   };
 
   return (
@@ -63,14 +66,13 @@ export default function Navbar() {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
             ? "bg-background/95 backdrop-blur-md shadow-card"
-            : "bg-transparent"
+            : "bg-background/90 backdrop-blur-sm"
         }`}
       >
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
-          <button
-            type="button"
-            onClick={() => handleNavClick("#home")}
+          <a
+            href="/"
             className="flex items-center gap-2.5 group"
             data-ocid="nav.link"
           >
@@ -81,22 +83,28 @@ export default function Navbar() {
               <span className="text-foreground">Swaad Wallah </span>
               <span className="text-primary">Sandwich</span>
             </span>
-          </button>
+          </a>
 
           {/* Desktop Links */}
           <ul className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <button
-                  type="button"
-                  onClick={() => handleNavClick(link.href)}
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors rounded-lg hover:bg-primary/8"
-                  data-ocid={`nav.${link.label.toLowerCase()}.link`}
-                >
-                  {link.label}
-                </button>
-              </li>
-            ))}
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      active
+                        ? "text-primary bg-primary/12 font-bold"
+                        : "text-muted-foreground hover:text-primary hover:bg-primary/8"
+                    }`}
+                    data-ocid={`nav.${link.label.toLowerCase()}.link`}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
 
           {/* Right side actions */}
@@ -120,16 +128,16 @@ export default function Navbar() {
 
             {/* Auth button */}
             {!isLoggedIn ? (
-              <Button
-                onClick={() => login()}
-                disabled={loginStatus === "logging-in"}
-                size="sm"
-                className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold"
-                data-ocid="nav.primary_button"
-              >
-                <User className="w-3.5 h-3.5 mr-1.5" />
-                {loginStatus === "logging-in" ? "Connecting..." : "Login"}
-              </Button>
+              <a href="/profile">
+                <Button
+                  size="sm"
+                  className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold"
+                  data-ocid="nav.primary_button"
+                >
+                  <User className="w-3.5 h-3.5 mr-1.5" />
+                  Login
+                </Button>
+              </a>
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -147,11 +155,20 @@ export default function Navbar() {
                 <DropdownMenuContent align="end" className="w-44">
                   <DropdownMenuItem asChild>
                     <a
-                      href="/orders"
+                      href="/order"
                       className="flex items-center gap-2"
                       data-ocid="nav.link"
                     >
                       <Package className="w-4 h-4" /> My Orders
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a
+                      href="/profile"
+                      className="flex items-center gap-2"
+                      data-ocid="nav.link"
+                    >
+                      <User className="w-4 h-4" /> Profile
                     </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -202,55 +219,37 @@ export default function Navbar() {
               className="md:hidden bg-background/98 backdrop-blur-md border-b border-border px-4 pb-4"
             >
               <ul className="flex flex-col gap-1 pt-2">
-                {navLinks.map((link) => (
-                  <li key={link.href}>
-                    <button
-                      type="button"
-                      onClick={() => handleNavClick(link.href)}
-                      className="w-full text-left px-4 py-3 text-sm font-medium text-foreground hover:text-primary hover:bg-primary/8 rounded-lg transition-colors"
-                      data-ocid={`nav.mobile.${link.label.toLowerCase()}.link`}
-                    >
-                      {link.label}
-                    </button>
-                  </li>
-                ))}
-                {isLoggedIn ? (
-                  <>
-                    <li>
+                {navLinks.map((link) => {
+                  const active = isActive(link.href);
+                  return (
+                    <li key={link.href}>
                       <a
-                        href="/orders"
-                        className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-primary"
-                        data-ocid="nav.mobile.link"
+                        href={link.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`block px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                          active
+                            ? "text-primary bg-primary/12 font-bold"
+                            : "text-foreground hover:text-primary hover:bg-primary/8"
+                        }`}
+                        data-ocid={`nav.mobile.${link.label.toLowerCase()}.link`}
                       >
-                        <Package className="w-4 h-4" /> My Orders
+                        {link.label}
                       </a>
                     </li>
-                    <li>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          clear();
-                          setMobileOpen(false);
-                        }}
-                        className="w-full text-left px-4 py-3 text-sm font-medium text-destructive"
-                        data-ocid="nav.mobile.button"
-                      >
-                        Logout
-                      </button>
-                    </li>
-                  </>
-                ) : (
+                  );
+                })}
+                {isLoggedIn && (
                   <li>
                     <button
                       type="button"
                       onClick={() => {
-                        login();
+                        clear();
                         setMobileOpen(false);
                       }}
-                      className="w-full text-left px-4 py-3 text-sm font-medium text-primary font-semibold"
-                      data-ocid="nav.mobile.primary_button"
+                      className="w-full text-left px-4 py-3 text-sm font-medium text-destructive"
+                      data-ocid="nav.mobile.button"
                     >
-                      Login to Order
+                      Logout
                     </button>
                   </li>
                 )}
