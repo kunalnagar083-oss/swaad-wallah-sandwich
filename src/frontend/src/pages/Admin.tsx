@@ -343,6 +343,7 @@ function EditItemDialog({ item }: { item: MenuItem }) {
 }
 
 function RestaurantInfoEditor() {
+  const { actor, isFetching: actorFetching } = useActor();
   const { data: info } = useGetRestaurantInfo();
   const updateInfo = useUpdateRestaurantInfo();
   const [form, setForm] = useState({
@@ -366,10 +367,15 @@ function RestaurantInfoEditor() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Re-establish admin session before saving so backend accepts the update
+      if (actor && !actorFetching) {
+        await actor.claimAdminWithPassword(ADMIN_USERNAME, ADMIN_PASSWORD);
+      }
       await updateInfo.mutateAsync(form);
       toast.success("Restaurant info updated!");
-    } catch {
-      toast.error("Failed to update info");
+    } catch (err) {
+      console.error("Failed to update restaurant info:", err);
+      toast.error("Failed to update info. Please try again.");
     }
   };
 
@@ -718,7 +724,7 @@ export default function AdminPage() {
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 font-semibold"
               data-ocid="admin.login.primary_button"
             >
-              "Login"
+              Login
             </Button>
           </form>
 

@@ -6,11 +6,23 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
+import {
+  Banknote,
+  CheckCircle2,
+  Loader2,
+  Minus,
+  Plus,
+  QrCode,
+  ShoppingCart,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
 import { usePlaceOrder } from "../hooks/useQueries";
+
+type PaymentMethod = "online" | "cod" | null;
 
 export default function CartDrawer() {
   const {
@@ -24,26 +36,45 @@ export default function CartDrawer() {
   } = useCart();
   const [message, setMessage] = useState("");
   const [confirming, setConfirming] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const placeOrder = usePlaceOrder();
 
   const handlePlaceOrder = async () => {
     if (items.length === 0) return;
+    if (!paymentMethod) {
+      toast.error("Please select a payment method.");
+      return;
+    }
+
+    const paymentNote =
+      paymentMethod === "online"
+        ? "\n[Payment: PhonePe/UPI - 9303526637@ybl]"
+        : "\n[Payment: Cash on Delivery]";
+
+    const fullMessage = (message.trim() || "") + paymentNote;
+
     try {
       await placeOrder.mutateAsync({
         items: items.map((i) => ({
           menuItemId: i.menuItem.id,
           quantity: BigInt(i.quantity),
         })),
-        message: message.trim() || null,
+        message: fullMessage || null,
       });
       toast.success("Order placed! We'll get it ready for you 🎉");
       clearCart();
       setMessage("");
       setConfirming(false);
+      setPaymentMethod(null);
       setIsOpen(false);
     } catch {
       toast.error("Failed to place order. Please try again.");
     }
+  };
+
+  const handleBack = () => {
+    setConfirming(false);
+    setPaymentMethod(null);
   };
 
   return (
@@ -139,6 +170,7 @@ export default function CartDrawer() {
             <div className="px-5 py-4 border-t border-border space-y-4">
               {confirming ? (
                 <>
+                  {/* Special instructions */}
                   <div>
                     <label
                       htmlFor="cart-message"
@@ -156,6 +188,86 @@ export default function CartDrawer() {
                       data-ocid="cart.textarea"
                     />
                   </div>
+
+                  {/* Payment method selection */}
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">
+                      Choose Payment Method
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("online")}
+                        className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 px-2 transition-all text-sm font-semibold ${
+                          paymentMethod === "online"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-card text-foreground hover:border-primary/50"
+                        }`}
+                        data-ocid="cart.payment_online.button"
+                      >
+                        <QrCode className="w-5 h-5" />
+                        Pay Online
+                        <span className="text-xs font-normal text-muted-foreground">
+                          PhonePe / UPI
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("cod")}
+                        className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 px-2 transition-all text-sm font-semibold ${
+                          paymentMethod === "cod"
+                            ? "border-secondary bg-secondary/10 text-secondary-foreground"
+                            : "border-border bg-card text-foreground hover:border-secondary/50"
+                        }`}
+                        data-ocid="cart.payment_cod.button"
+                      >
+                        <Banknote className="w-5 h-5" />
+                        Cash on Delivery
+                        <span className="text-xs font-normal text-muted-foreground">
+                          Pay at door
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Online payment QR */}
+                  {paymentMethod === "online" && (
+                    <div
+                      className="bg-muted/40 rounded-xl p-4 flex flex-col items-center gap-2"
+                      data-ocid="cart.qr.card"
+                    >
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        Scan to Pay
+                      </p>
+                      <img
+                        src="/assets/uploads/Screenshot_2025-09-24-13-57-36-20-1.jpg"
+                        alt="PhonePe QR Code"
+                        className="w-40 h-40 object-contain rounded-lg border border-border"
+                      />
+                      <p className="text-sm font-bold text-foreground">
+                        9303526637@ybl
+                      </p>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Scan with PhonePe, GPay, or any UPI app
+                      </p>
+                    </div>
+                  )}
+
+                  {/* COD confirmation */}
+                  {paymentMethod === "cod" && (
+                    <div className="bg-muted/40 rounded-xl p-3 flex items-center gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                      <p className="text-sm text-foreground">
+                        You will pay{" "}
+                        <span className="font-bold">
+                          ₹{totalPrice.toLocaleString()}
+                        </span>{" "}
+                        when your order is delivered.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Total + actions */}
                   <div className="flex items-center justify-between text-sm font-semibold">
                     <span className="text-muted-foreground">Grand Total</span>
                     <span className="font-display font-800 text-xl text-primary">
@@ -165,14 +277,14 @@ export default function CartDrawer() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => setConfirming(false)}
+                      onClick={handleBack}
                       data-ocid="cart.cancel_button"
                     >
                       Back
                     </Button>
                     <Button
                       onClick={handlePlaceOrder}
-                      disabled={placeOrder.isPending}
+                      disabled={placeOrder.isPending || !paymentMethod}
                       className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
                       data-ocid="cart.confirm_button"
                     >
@@ -181,6 +293,8 @@ export default function CartDrawer() {
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />{" "}
                           Placing...
                         </>
+                      ) : paymentMethod === "online" ? (
+                        "I've Paid — Confirm"
                       ) : (
                         "Confirm Order"
                       )}
