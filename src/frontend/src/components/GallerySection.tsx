@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { useShouldReduceMotion } from "../hooks/useReducedMotion";
 
 const galleryImages = [
   {
@@ -22,13 +23,15 @@ const galleryImages = [
 ];
 
 export default function GallerySection() {
+  const reduceMotion = useShouldReduceMotion();
+
   return (
     <section id="gallery" className="py-20 bg-muted/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
@@ -45,29 +48,53 @@ export default function GallerySection() {
         </motion.div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 auto-rows-[200px]">
-          {galleryImages.map((img, i) => (
-            <motion.div
-              key={img.src}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className={`relative overflow-hidden rounded-2xl group cursor-pointer ${img.className ?? ""}`}
-            >
-              <img
-                src={img.src}
-                alt={img.alt}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors duration-300 flex items-end p-4">
-                <span className="text-white font-semibold text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  {img.alt}
-                </span>
-              </div>
-            </motion.div>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 auto-rows-[160px] sm:auto-rows-[200px]">
+          {galleryImages.map((img, i) => {
+            const sharedClass = `relative overflow-hidden rounded-2xl group cursor-pointer ${img.className ?? ""}`;
+            const imgClass =
+              "w-full h-full object-cover sm:group-hover:scale-110 transition-transform duration-500";
+
+            if (reduceMotion) {
+              return (
+                <div key={img.src} className={sharedClass}>
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className={imgClass}
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors duration-300 flex items-end p-4">
+                    <span className="text-white font-semibold text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {img.alt}
+                    </span>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <motion.div
+                key={img.src}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className={sharedClass}
+              >
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  className={imgClass}
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/20 transition-colors duration-300 flex items-end p-4">
+                  <span className="text-white font-semibold text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {img.alt}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

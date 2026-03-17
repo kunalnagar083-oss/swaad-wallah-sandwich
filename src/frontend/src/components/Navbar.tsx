@@ -73,13 +73,13 @@ export default function Navbar() {
           {/* Logo */}
           <a
             href="/"
-            className="flex items-center gap-2.5 group"
+            className="flex items-center gap-2 sm:gap-2.5 group min-w-0 flex-shrink"
             data-ocid="nav.link"
           >
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center shadow-warm">
-              <ChefHat className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center shadow-warm flex-shrink-0">
+              <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
             </div>
-            <span className="font-display font-700 text-lg leading-tight">
+            <span className="font-display font-700 text-sm sm:text-base lg:text-lg leading-tight min-w-0">
               <span className="text-foreground">Swaad Wallah </span>
               <span className="text-primary">Sandwich</span>
             </span>
@@ -93,7 +93,7 @@ export default function Navbar() {
                 <li key={link.href}>
                   <a
                     href={link.href}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    className={`px-3 lg:px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                       active
                         ? "text-primary bg-primary/12 font-bold"
                         : "text-muted-foreground hover:text-primary hover:bg-primary/8"
@@ -108,7 +108,7 @@ export default function Navbar() {
           </ul>
 
           {/* Right side actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* Cart button */}
             {isLoggedIn && (
               <button

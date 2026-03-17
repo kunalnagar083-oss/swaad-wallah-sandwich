@@ -16,8 +16,10 @@ import {
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useShouldReduceMotion } from "../hooks/useReducedMotion";
 
 export default function ContactSection() {
+  const reduceMotion = useShouldReduceMotion();
   const [form, setForm] = useState({ name: "", phone: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,20 +36,20 @@ export default function ContactSection() {
     "https://www.google.com/maps/search/?api=1&query=Indrapuri+Sector+C,+Bhopal,+Madhya+Pradesh";
 
   return (
-    <section id="contact" className="py-24 bg-background">
+    <section id="contact" className="py-16 sm:py-24 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
           <p className="text-primary font-bold text-base uppercase tracking-widest mb-3">
             🕉️ संपर्क करें · Get In Touch
           </p>
-          <h2 className="font-display text-5xl sm:text-6xl font-800 text-foreground mb-5">
+          <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-800 text-foreground mb-5">
             Contact Us
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto text-lg">
@@ -56,21 +58,19 @@ export default function ContactSection() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-12 items-start">
           {/* ── LEFT: Contact info cards ── */}
           <motion.div
-            initial={{ opacity: 0, x: -24 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, x: -24 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="space-y-5"
+            className="space-y-4 sm:space-y-5"
           >
             {/* ─ PHONE – Big CTA ─ */}
-            <motion.a
+            <a
               href="tel:+919303526637"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-5 p-7 rounded-3xl cursor-pointer no-underline block"
+              className="flex items-center gap-3 sm:gap-5 p-4 sm:p-7 rounded-3xl cursor-pointer no-underline block hover:opacity-90 active:scale-95 transition-all"
               style={{
                 background:
                   "linear-gradient(135deg, oklch(0.62 0.24 48), oklch(0.55 0.26 35))",
@@ -79,32 +79,30 @@ export default function ContactSection() {
               data-ocid="contact.phone.link"
             >
               <div
-                className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
+                className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(255,255,255,0.18)" }}
               >
-                <Phone className="w-10 h-10 text-white" />
+                <Phone className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
               </div>
-              <div className="flex-1">
-                <div className="text-orange-100 font-bold text-base uppercase tracking-widest mb-1">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="text-orange-100 font-bold text-sm sm:text-base uppercase tracking-widest mb-1">
                   📞 Call Now
                 </div>
-                <div className="text-white font-display text-3xl font-bold leading-tight">
+                <div className="text-white font-display text-xl sm:text-3xl font-bold leading-tight break-words">
                   +91 93035 26637
                 </div>
                 <div className="text-orange-200 text-sm mt-1.5 font-medium">
                   Tap to call instantly →
                 </div>
               </div>
-            </motion.a>
+            </a>
 
             {/* ─ INSTAGRAM – Gradient card ─ */}
-            <motion.a
+            <a
               href="https://www.instagram.com/swaad_wallah_sandwich"
               target="_blank"
               rel="noopener noreferrer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-5 p-6 rounded-3xl cursor-pointer no-underline block"
+              className="flex items-center gap-3 sm:gap-5 p-4 sm:p-6 rounded-3xl cursor-pointer no-underline block hover:opacity-90 active:scale-95 transition-all"
               style={{
                 background:
                   "linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)",
@@ -113,32 +111,30 @@ export default function ContactSection() {
               data-ocid="contact.instagram.link"
             >
               <div
-                className="w-18 h-18 w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "rgba(255,255,255,0.18)" }}
               >
-                <Instagram className="w-9 h-9 text-white" />
+                <Instagram className="w-6 h-6 sm:w-9 sm:h-9 text-white" />
               </div>
-              <div className="flex-1">
-                <div className="text-pink-100 font-bold text-sm uppercase tracking-widest mb-1">
+              <div className="flex-1 min-w-0 overflow-hidden break-words">
+                <div className="text-pink-100 font-bold text-xs sm:text-sm uppercase tracking-widest mb-1">
                   ✨ Follow on Instagram
                 </div>
-                <div className="text-white font-display text-2xl font-bold">
+                <div className="text-white font-display text-base sm:text-2xl font-bold break-all">
                   @swaad_wallah_sandwich
                 </div>
                 <div className="text-pink-200 text-sm mt-1 font-medium">
                   Tap to open Instagram →
                 </div>
               </div>
-            </motion.a>
+            </a>
 
             {/* ─ ADDRESS – Opens Google Maps ─ */}
-            <motion.a
+            <a
               href={mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex items-center gap-5 p-6 rounded-3xl cursor-pointer no-underline block border-2"
+              className="flex items-center gap-3 sm:gap-5 p-4 sm:p-6 rounded-3xl cursor-pointer no-underline block border-2 hover:opacity-90 active:scale-95 transition-all"
               style={{
                 background: "oklch(0.96 0.06 70)",
                 borderColor: "oklch(0.70 0.22 50)",
@@ -147,26 +143,26 @@ export default function ContactSection() {
               data-ocid="contact.map_marker"
             >
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "oklch(0.65 0.22 48)" }}
               >
-                <Navigation className="w-8 h-8 text-white" />
+                <Navigation className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 <div
-                  className="font-bold text-sm uppercase tracking-widest mb-1"
+                  className="font-bold text-xs sm:text-sm uppercase tracking-widest mb-1"
                   style={{ color: "oklch(0.55 0.20 48)" }}
                 >
                   📍 Our Location
                 </div>
                 <div
-                  className="font-display text-xl font-bold leading-snug"
+                  className="font-display text-lg sm:text-xl font-bold leading-snug"
                   style={{ color: "oklch(0.22 0.05 45)" }}
                 >
                   Indrapuri Sector C
                 </div>
                 <div
-                  className="text-base font-medium"
+                  className="text-sm sm:text-base font-medium"
                   style={{ color: "oklch(0.38 0.08 50)" }}
                 >
                   Bhopal, Madhya Pradesh
@@ -178,31 +174,31 @@ export default function ContactSection() {
                   <ExternalLink className="w-3.5 h-3.5" /> Open in Google Maps
                 </div>
               </div>
-            </motion.a>
+            </a>
 
             {/* ─ HOURS ─ */}
             <div
-              className="flex items-center gap-5 p-6 rounded-3xl border-2"
+              className="flex items-center gap-3 sm:gap-5 p-4 sm:p-6 rounded-3xl border-2"
               style={{
                 background: "oklch(0.97 0.04 75)",
                 borderColor: "oklch(0.75 0.18 80)",
               }}
             >
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "oklch(0.70 0.18 80)" }}
               >
-                <Clock className="w-8 h-8 text-white" />
+                <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <div>
+              <div className="min-w-0 overflow-hidden">
                 <div
-                  className="font-bold text-sm uppercase tracking-widest mb-1"
+                  className="font-bold text-xs sm:text-sm uppercase tracking-widest mb-1"
                   style={{ color: "oklch(0.55 0.14 80)" }}
                 >
                   🕐 Opening Hours
                 </div>
                 <div
-                  className="font-display text-2xl font-bold"
+                  className="font-display text-xl sm:text-2xl font-bold"
                   style={{ color: "oklch(0.22 0.05 45)" }}
                 >
                   11 AM – 11 PM
@@ -218,27 +214,27 @@ export default function ContactSection() {
 
             {/* ─ OWNER ─ */}
             <div
-              className="flex items-center gap-5 p-6 rounded-3xl border-2"
+              className="flex items-center gap-3 sm:gap-5 p-4 sm:p-6 rounded-3xl border-2"
               style={{
                 background: "oklch(0.97 0.04 65)",
                 borderColor: "oklch(0.78 0.16 60)",
               }}
             >
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
                 style={{ background: "oklch(0.65 0.22 48)" }}
               >
-                <User className="w-8 h-8 text-white" />
+                <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
-              <div>
+              <div className="min-w-0 overflow-hidden">
                 <div
-                  className="font-bold text-sm uppercase tracking-widest mb-1"
+                  className="font-bold text-xs sm:text-sm uppercase tracking-widest mb-1"
                   style={{ color: "oklch(0.55 0.20 48)" }}
                 >
                   👨‍🍳 Owner
                 </div>
                 <div
-                  className="font-display text-2xl font-bold"
+                  className="font-display text-xl sm:text-2xl font-bold"
                   style={{ color: "oklch(0.22 0.05 45)" }}
                 >
                   Kunal Nagar
@@ -253,12 +249,11 @@ export default function ContactSection() {
             </div>
 
             {/* ─ MAP embed clickable ─ */}
-            <motion.a
+            <a
               href={mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              whileHover={{ scale: 1.01 }}
-              className="mt-2 block rounded-3xl overflow-hidden border-4 cursor-pointer"
+              className="mt-2 block rounded-3xl overflow-hidden border-4 cursor-pointer hover:opacity-95 transition-opacity"
               style={{
                 borderColor: "oklch(0.65 0.22 48)",
                 boxShadow: "0 8px 28px oklch(0.65 0.22 48 / 0.3)",
@@ -271,6 +266,7 @@ export default function ContactSection() {
                   src="https://maps.google.com/maps?q=Indrapuri+Sector+C,+Bhopal,+Madhya+Pradesh&z=15&output=embed"
                   width="100%"
                   height="260"
+                  className="w-full"
                   style={{ border: 0, display: "block", pointerEvents: "none" }}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
@@ -292,19 +288,19 @@ export default function ContactSection() {
                   </div>
                 </div>
               </div>
-            </motion.a>
+            </a>
           </motion.div>
 
           {/* ── RIGHT: Contact form ── */}
           <motion.div
-            initial={{ opacity: 0, x: 24 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, x: 24 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <form
               onSubmit={handleSubmit}
-              className="rounded-3xl p-8 space-y-6 border-2"
+              className="rounded-3xl p-5 sm:p-8 space-y-6 border-2"
               style={{
                 background: "oklch(0.97 0.04 68)",
                 borderColor: "oklch(0.75 0.18 55)",
@@ -314,7 +310,7 @@ export default function ContactSection() {
             >
               <div className="mb-2">
                 <h3
-                  className="font-display text-3xl font-bold mb-1"
+                  className="font-display text-2xl sm:text-3xl font-bold mb-1"
                   style={{ color: "oklch(0.22 0.05 45)" }}
                 >
                   Send a Message
@@ -430,7 +426,7 @@ export default function ContactSection() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <a
                   href="tel:+919303526637"
-                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white text-base no-underline transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white text-base no-underline hover:opacity-90 active:scale-95 transition-all"
                   style={{
                     background:
                       "linear-gradient(135deg, oklch(0.62 0.24 48), oklch(0.55 0.26 35))",
@@ -443,7 +439,7 @@ export default function ContactSection() {
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white text-base no-underline transition-all"
+                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white text-base no-underline hover:opacity-90 active:scale-95 transition-all"
                   style={{
                     background:
                       "linear-gradient(135deg, oklch(0.55 0.16 145), oklch(0.45 0.18 155))",
@@ -467,7 +463,7 @@ export default function ContactSection() {
                   style={{ color: "oklch(0.60 0.20 48)" }}
                 />
                 <span
-                  className="text-base font-medium"
+                  className="text-sm sm:text-base font-medium break-all"
                   style={{ color: "oklch(0.35 0.08 48)" }}
                 >
                   swaadwallahbhopal@gmail.com

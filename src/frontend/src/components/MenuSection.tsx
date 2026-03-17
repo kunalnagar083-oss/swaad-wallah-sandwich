@@ -9,6 +9,7 @@ import type { MenuItem } from "../backend.d";
 import { useCart } from "../context/CartContext";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetAvailableMenuItems } from "../hooks/useQueries";
+import { useShouldReduceMotion } from "../hooks/useReducedMotion";
 
 const CATEGORIES = ["All", "Sandwich", "Burger", "Beverage", "Snack"];
 
@@ -27,6 +28,7 @@ const categoryColors: Record<string, string> = {
 };
 
 function MenuCard({ item, index }: { item: MenuItem; index: number }) {
+  const reduceMotion = useShouldReduceMotion();
   const imgSrc =
     categoryImages[item.category] ??
     "/assets/generated/sandwich1.dim_400x300.jpg";
@@ -50,20 +52,13 @@ function MenuCard({ item, index }: { item: MenuItem; index: number }) {
     });
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: (index % 6) * 0.08 }}
-      className="bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-shadow duration-300 group flex flex-col"
-      data-ocid={`menu.item.${index + 1}`}
-    >
+  const cardContent = (
+    <>
       <div className="relative overflow-hidden h-40">
         <img
           src={imgSrc}
           alt={item.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover sm:group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-card/60 to-transparent" />
@@ -73,7 +68,7 @@ function MenuCard({ item, index }: { item: MenuItem; index: number }) {
           {item.category}
         </Badge>
       </div>
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
         <h3 className="font-display font-700 text-sm text-foreground mb-1 leading-snug">
           {item.name}
         </h3>
@@ -81,14 +76,14 @@ function MenuCard({ item, index }: { item: MenuItem; index: number }) {
           {item.description}
         </p>
         <div className="flex items-center justify-between mt-auto">
-          <span className="font-display font-800 text-lg text-primary">
+          <span className="font-display font-800 text-base sm:text-lg text-primary">
             ₹{item.price.toString()}
           </span>
           {item.isAvailable ? (
             <Button
               size="sm"
               onClick={handleAddToCart}
-              className="h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-full"
+              className="h-7 sm:h-8 px-2 sm:px-3 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-full"
               data-ocid={`menu.item.${index + 1}`}
             >
               <Plus className="w-3 h-3 mr-1" />
@@ -101,6 +96,30 @@ function MenuCard({ item, index }: { item: MenuItem; index: number }) {
           )}
         </div>
       </div>
+    </>
+  );
+
+  if (reduceMotion) {
+    return (
+      <div
+        className="bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-shadow duration-300 group flex flex-col"
+        data-ocid={`menu.item.${index + 1}`}
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: (index % 6) * 0.08 }}
+      className="bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-warm transition-shadow duration-300 group flex flex-col"
+      data-ocid={`menu.item.${index + 1}`}
+    >
+      {cardContent}
     </motion.div>
   );
 }
@@ -124,6 +143,7 @@ function MenuSkeleton() {
 }
 
 export default function MenuSection() {
+  const reduceMotion = useShouldReduceMotion();
   const [activeCategory, setActiveCategory] = useState("All");
   const { data: menuItems, isLoading } = useGetAvailableMenuItems();
   const { totalCount, setIsOpen } = useCart();
@@ -140,8 +160,8 @@ export default function MenuSection() {
     <section id="menu" className="py-20 bg-muted/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
@@ -169,7 +189,7 @@ export default function MenuSection() {
               role="tab"
               aria-selected={activeCategory === cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-5 py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${
+              className={`px-3 py-1.5 sm:px-5 sm:py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${
                 activeCategory === cat
                   ? "bg-primary text-primary-foreground border-primary shadow-warm"
                   : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-primary"
@@ -196,7 +216,7 @@ export default function MenuSection() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {SKELETON_KEYS.map((k) => (
               <MenuSkeleton key={k} />
             ))}
@@ -208,7 +228,7 @@ export default function MenuSection() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {filtered.map((item, i) => (
               <MenuCard key={item.id.toString()} item={item} index={i} />
             ))}

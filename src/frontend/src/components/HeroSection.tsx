@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Clock, MapPin, Star } from "lucide-react";
 import { motion } from "motion/react";
+import { useShouldReduceMotion } from "../hooks/useReducedMotion";
 
 export default function HeroSection() {
+  const reduceMotion = useShouldReduceMotion();
+
   const scrollToMenu = () => {
     document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -32,8 +35,8 @@ export default function HeroSection() {
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         {/* Badge */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="inline-flex items-center gap-1.5 bg-primary/20 backdrop-blur-sm border border-primary/40 text-primary-foreground text-xs font-semibold px-4 py-1.5 rounded-full mb-6"
         >
@@ -42,8 +45,8 @@ export default function HeroSection() {
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 30 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
           className="font-display text-5xl sm:text-6xl lg:text-7xl font-800 text-white leading-tight mb-4"
         >
@@ -57,8 +60,8 @@ export default function HeroSection() {
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.25 }}
           className="text-white/85 text-lg sm:text-xl font-body mb-3 max-w-lg mx-auto"
         >
@@ -67,8 +70,8 @@ export default function HeroSection() {
 
         {/* Info chips */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.35 }}
           className="flex flex-wrap items-center justify-center gap-3 mb-8"
         >
@@ -84,8 +87,8 @@ export default function HeroSection() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
+          animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-3"
         >
@@ -113,22 +116,15 @@ export default function HeroSection() {
         </motion.div>
       </div>
 
-      {/* Scroll indicator */}
-      <motion.button
+      {/* Scroll indicator — CSS bounce only, no Framer Motion infinite loop */}
+      <button
+        type="button"
         onClick={scrollToMenu}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/60 hover:text-white transition-colors"
         aria-label="Scroll down"
       >
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}
-        >
-          <ChevronDown className="w-6 h-6" />
-        </motion.div>
-      </motion.button>
+        <ChevronDown className="w-6 h-6 animate-bounce" />
+      </button>
     </section>
   );
 }

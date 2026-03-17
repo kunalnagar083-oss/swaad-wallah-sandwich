@@ -7,6 +7,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useShouldReduceMotion } from "../hooks/useReducedMotion";
 
 const stats = [
   { icon: Users, value: "500+", label: "Happy Customers Daily" },
@@ -15,10 +16,12 @@ const stats = [
 ];
 
 export default function AboutSection() {
+  const reduceMotion = useShouldReduceMotion();
+
   return (
     <section
       id="about"
-      className="py-20 relative overflow-hidden"
+      className="py-16 sm:py-20 relative overflow-hidden"
       style={{
         background:
           "linear-gradient(135deg, oklch(0.88 0.10 55) 0%, oklch(0.92 0.08 65) 40%, oklch(0.85 0.12 42) 100%)",
@@ -45,11 +48,11 @@ export default function AboutSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Top banner badge */}
         <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0, y: -16 }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="flex justify-center mb-12"
+          className="flex justify-center mb-10 sm:mb-12"
         >
           <div
             className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full font-bold text-sm tracking-widest uppercase shadow-lg"
@@ -66,16 +69,16 @@ export default function AboutSection() {
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
           {/* Text */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, x: -30 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
             <h2
-              className="font-display text-5xl sm:text-6xl font-800 mb-6 leading-tight"
+              className="font-display text-4xl sm:text-5xl lg:text-6xl font-800 mb-6 leading-tight"
               style={{ color: "oklch(0.22 0.06 45)" }}
             >
               The{" "}
@@ -109,14 +112,14 @@ export default function AboutSection() {
 
             {/* Founder Badge */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.95 }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mb-8"
             >
               <div
-                className="inline-flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-md"
+                className="inline-flex items-center gap-3 px-3 py-2.5 sm:px-5 sm:py-3.5 rounded-2xl shadow-md"
                 style={{
                   background:
                     "linear-gradient(135deg, oklch(0.99 0.02 75), oklch(0.96 0.06 68))",
@@ -152,7 +155,7 @@ export default function AboutSection() {
             </motion.div>
 
             <div
-              className="flex items-center gap-2 text-sm mb-8 px-4 py-2.5 rounded-xl w-fit"
+              className="flex items-center gap-2 text-sm mb-8 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl w-fit max-w-full overflow-hidden"
               style={{
                 background: "oklch(0.99 0.02 75 / 0.7)",
                 border: "1px solid oklch(0.80 0.12 55)",
@@ -163,22 +166,22 @@ export default function AboutSection() {
                 className="w-4 h-4 flex-shrink-0"
                 style={{ color: "oklch(0.60 0.22 48)" }}
               />
-              <span>
+              <span className="truncate">
                 Indrapuri Sector C, Bhopal &nbsp;·&nbsp; Open 11 AM – 11 PM
                 daily
               </span>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
               {stats.map(({ icon: Icon, value, label }, i) => (
                 <motion.div
                   key={label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+                  whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: 0.1 * i }}
-                  className="text-center p-4 rounded-2xl shadow-md"
+                  className="text-center p-2.5 sm:p-4 rounded-2xl shadow-md"
                   style={{
                     background:
                       "linear-gradient(135deg, oklch(0.62 0.22 48), oklch(0.55 0.20 35))",
@@ -186,12 +189,12 @@ export default function AboutSection() {
                   }}
                 >
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-2"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center mx-auto mb-1.5 sm:mb-2"
                     style={{ background: "oklch(0.99 0.02 75 / 0.25)" }}
                   >
-                    <Icon className="w-5 h-5 text-white" />
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <div className="font-display font-800 text-xl text-white">
+                  <div className="font-display font-800 text-base sm:text-xl text-white">
                     {value}
                   </div>
                   <div
@@ -207,8 +210,8 @@ export default function AboutSection() {
 
           {/* Image */}
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, x: 30 }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.15 }}
             className="relative"
@@ -228,7 +231,7 @@ export default function AboutSection() {
               <img
                 src="/assets/generated/sandwich1.dim_400x300.jpg"
                 alt="Fresh Swaad Wallah Sandwich"
-                className="w-full h-[420px] object-cover"
+                className="w-full h-[280px] sm:h-[380px] lg:h-[420px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               {/* Spice accent label */}
@@ -242,9 +245,9 @@ export default function AboutSection() {
                 🌶️ Desi Swaad
               </div>
             </div>
-            {/* Floating card */}
+            {/* Floating card – hidden on mobile to prevent overflow */}
             <div
-              className="absolute -bottom-6 -left-6 rounded-2xl p-4 flex items-center gap-3 shadow-xl"
+              className="hidden sm:flex absolute -bottom-6 -left-6 rounded-2xl p-4 items-center gap-3 shadow-xl"
               style={{
                 background: "oklch(0.99 0.02 75)",
                 border: "2px solid oklch(0.80 0.12 55)",
